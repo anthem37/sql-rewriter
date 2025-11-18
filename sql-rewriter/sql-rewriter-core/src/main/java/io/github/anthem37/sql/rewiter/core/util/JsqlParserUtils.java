@@ -57,7 +57,7 @@ public class JsqlParserUtils {
      * @throws IllegalArgumentException 不支持的类型时抛出
      */
     public static Expression createValueExpression(Object value) {
-        if (ObjectUtil.isEmpty(value)) {
+        if (ObjectUtil.isNull(value)) {
             return new NullValue();
         }
         if (value instanceof Long) {
@@ -76,7 +76,7 @@ public class JsqlParserUtils {
         }
         if (value instanceof Timestamp) {
             String tsStr = DateUtil.format((Timestamp) value, DatePattern.NORM_DATETIME_PATTERN);
-            return new TimestampValue(tsStr);
+            return new StringValue("'" + tsStr + "'");
         }
         if (value instanceof DateTime) {
             String dtStr = DateUtil.format((DateTime) value, DatePattern.NORM_DATETIME_PATTERN);

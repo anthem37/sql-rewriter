@@ -7,15 +7,11 @@ import io.github.anthem37.sql.rewiter.core.rule.RulePriority;
 import io.github.anthem37.sql.rewiter.core.util.JsqlParserUtils;
 import lombok.Getter;
 import net.sf.jsqlparser.expression.Expression;
-import net.sf.jsqlparser.expression.Function;
-import net.sf.jsqlparser.expression.RowConstructor;
+import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 import net.sf.jsqlparser.statement.insert.Insert;
-import net.sf.jsqlparser.statement.select.Values;
-
-import java.util.List;
 
 /**
  * Insert语句添加列规则实现
@@ -126,38 +122,29 @@ public class AddColumnInsertRule implements ISqlRule<Insert> {
         }
 
         // 添加新列名
-        insert.addColumns(new Column(columnName));
-
-        Values values = insert.getValues();
-        // 添加新值
-        ExpressionList insertItemsList = values.getExpressions();
-        List<Expression> insertItemsListExpressions = Lists.newArrayList(insertItemsList.getExpressions());
-        if (CollectionUtil.isEmpty(insertItemsListExpressions)) {
-            insertItemsListExpressions.add(JsqlParserUtils.createValueExpression(columnValue));
-            insertItemsList.setExpressions(insertItemsListExpressions);
-            return;
+        ExpressionList<Column> columns = insert.getColumns();
+        if (CollectionUtil.isNotEmpty(columns)) {
+            insert.addColumns(new Column(columnName));
         }
-        Expression firstExpression = insertItemsListExpressions.get(0);
-        if (firstExpression instanceof RowConstructor) {
-            // 处理RowConstructor类型
-            for (Expression expression : insertItemsListExpressions) {
-                RowConstructor rowConstructor = (RowConstructor) expression;
-                rowConstructor.getExpressions().add(JsqlParserUtils.createValueExpression(columnValue));
+        // 添加新列值
+        Expression valueExpression = JsqlParserUtils.createValueExpression(columnValue);
+        ExpressionList<Expression> expressions = (ExpressionList<Expression>) insert.getValues().getExpressions();
+        boolean alreadyAppended = false;
+        for (Expression expression : expressions) {
+            if (expression instanceof Parenthesis) {
+                Parenthesis parenthesis = (Parenthesis) expression;
+                parenthesis.withExpression(new ExpressionList<>(Lists.newArrayList(parenthesis.getExpression(), valueExpression)));
+                alreadyAppended = true;
             }
-            return;
-        }
-        if (firstExpression instanceof Function) {
-            // 处理Function类型
-            for (Expression expression : insertItemsListExpressions) {
-                Function function = (Function) expression;
-                ExpressionList parameters = function.getParameters();
-                parameters.getExpressions().add(JsqlParserUtils.createValueExpression(columnValue));
+            if (expression instanceof ExpressionList) {
+                ExpressionList<Expression> subExpressions = (ExpressionList<Expression>) expression;
+                subExpressions.addExpression(valueExpression);
+                alreadyAppended = true;
             }
-            return;
         }
-        // 处理普通值列表
-        insertItemsListExpressions.add(JsqlParserUtils.createValueExpression(columnValue));
-        insertItemsList.setExpressions(insertItemsListExpressions);
+        if (!alreadyAppended) {
+            expressions.addExpression(valueExpression);
+        }
     }
 
 }
