@@ -60,27 +60,29 @@ public class JsqlParserUtils {
         if (ObjectUtil.isNull(value)) {
             return new NullValue();
         }
-        if (value instanceof Long) {
-            return new LongValue((Long) value);
+        // 整数类型
+        if ((value instanceof Byte) || (value instanceof Integer) || (value instanceof Short) || (value instanceof Long)) {
+            return new LongValue(Long.parseLong(String.valueOf(value)));
         }
-        if (value instanceof Double) {
+        // 浮点数类型
+        if ((value instanceof Float) || (value instanceof Double)) {
             return new DoubleValue(String.valueOf(value));
         }
         if (value instanceof Date) {
             String dateStr = DateUtil.format((Date) value, DatePattern.NORM_DATE_PATTERN);
-            return new StringValue("'" + dateStr + "'");
+            return new StringValue(dateStr);
         }
         if (value instanceof Time) {
             String timeStr = DateUtil.format((Time) value, DatePattern.NORM_TIME_PATTERN);
-            return new StringValue("'" + timeStr + "'");
+            return new StringValue(timeStr);
         }
         if (value instanceof Timestamp) {
             String tsStr = DateUtil.format((Timestamp) value, DatePattern.NORM_DATETIME_PATTERN);
-            return new StringValue("'" + tsStr + "'");
+            return new StringValue(tsStr);
         }
         if (value instanceof DateTime) {
             String dtStr = DateUtil.format((DateTime) value, DatePattern.NORM_DATETIME_PATTERN);
-            return new StringValue("'" + dtStr + "'");
+            return new StringValue(dtStr);
         }
         return new StringValue(String.valueOf(value));
     }
