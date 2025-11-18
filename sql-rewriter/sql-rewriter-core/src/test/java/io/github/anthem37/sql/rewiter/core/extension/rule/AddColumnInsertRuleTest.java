@@ -1,9 +1,14 @@
 package io.github.anthem37.sql.rewiter.core.extension.rule;
 
+import cn.hutool.core.date.DateTime;
 import net.sf.jsqlparser.parser.CCJSqlParserUtil;
 import net.sf.jsqlparser.statement.Statement;
 import net.sf.jsqlparser.statement.insert.Insert;
 import org.junit.Test;
+
+import java.sql.Date;
+import java.sql.Time;
+import java.sql.Timestamp;
 
 import static org.junit.Assert.*;
 
@@ -234,5 +239,46 @@ public class AddColumnInsertRuleTest {
         AddColumnInsertRule rule = new AddColumnInsertRule("tenant", "tenant_id", "TENANT_1");
 
         assertEquals("tenant", rule.getTargetTableName());
+    }
+
+    @Test
+    public void dateFormatCompatibilityTest() throws Exception {
+        // 测试各种日期类型在MySQL和PostgreSQL中的兼容性
+
+        // 1. java.sql.Date -> yyyy-MM-dd 格式
+        Date sqlDate = Date.valueOf("2023-12-25");
+        Statement statement1 = CCJSqlParserUtil.parse("INSERT INTO tenant(name) VALUES ('NAME')");
+        Insert insert1 = (Insert) statement1;
+        AddColumnInsertRule rule1 = new AddColumnInsertRule("tenant", "created_date", sqlDate);
+        rule1.applyTyped(insert1);
+        assertEquals("INSERT INTO tenant (name, created_date) VALUES ('NAME', '2023-12-25')", insert1.toString());
+
+        // 2. java.sql.Time -> HH:mm:ss 格式  
+        Time sqlTime = Time.valueOf("14:30:15");
+        Statement statement2 = CCJSqlParserUtil.parse("INSERT INTO tenant(name) VALUES ('NAME')");
+        Insert insert2 = (Insert) statement2;
+        AddColumnInsertRule rule2 = new AddColumnInsertRule("tenant", "created_time", sqlTime);
+        rule2.applyTyped(insert2);
+        assertEquals("INSERT INTO tenant (name, created_time) VALUES ('NAME', '14:30:15')", insert2.toString());
+
+        // 3. java.sql.Timestamp -> yyyy-MM-dd HH:mm:ss 格式
+        Timestamp sqlTimestamp = Timestamp.valueOf("2023-12-25 14:30:15");
+        Statement statement3 = CCJSqlParserUtil.parse("INSERT INTO tenant(name) VALUES ('NAME')");
+        Insert insert3 = (Insert) statement3;
+        AddColumnInsertRule rule3 = new AddColumnInsertRule("tenant", "created_timestamp", sqlTimestamp);
+        rule3.applyTyped(insert3);
+        assertEquals("INSERT INTO tenant (name, created_timestamp) VALUES ('NAME', '2023-12-25 14:30:15')", insert3.toString());
+
+        // 4. DateTime (HuTool) -> yyyy-MM-dd HH:mm:ss 格式
+        DateTime dateTime = new DateTime("2023-12-25 14:30:15");
+        Statement statement4 = CCJSqlParserUtil.parse("INSERT INTO tenant(name) VALUES ('NAME')");
+        Insert insert4 = (Insert) statement4;
+        AddColumnInsertRule rule4 = new AddColumnInsertRule("tenant", "created_datetime", dateTime);
+        rule4.applyTyped(insert4);
+        assertEquals("INSERT INTO tenant (name, created_datetime) VALUES ('NAME', '2023-12-25 14:30:15')", insert4.toString());
+
+        // 所有这些格式都能被MySQL和PostgreSQL正确解析：
+        // MySQL: 支持 '2023-12-25', '14:30:15', '2023-12-25 14:30:15'
+        // PostgreSQL: 支持 '2023-12-25', '14:30:15', '2023-12-25 14:30:15'
     }
 }
