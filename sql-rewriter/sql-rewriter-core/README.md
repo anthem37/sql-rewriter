@@ -43,9 +43,9 @@
 ### 基础示例
 
 ```java
-import io.github.anthem37.sql.rewiter.core.engine.impl.SQLRewriteEngine;
-import io.github.anthem37.sql.rewiter.core.extension.rule.AddConditionSelectRule;
-import io.github.anthem37.sql.rewiter.core.extension.expression.impl.EqualToConditionExpression;
+import impl.engine.io.github.anthem37.sql.rewriter.core.SQLRewriteEngine;
+import rule.extension.io.github.anthem37.sql.rewriter.core.AddConditionSelectRule;
+import impl.expression.extension.io.github.anthem37.sql.rewriter.core.EqualToConditionExpression;
 
 // 1. 创建重写规则
 AddConditionSelectRule tenantRule = new AddConditionSelectRule(
