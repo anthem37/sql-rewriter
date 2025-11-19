@@ -1,5 +1,6 @@
 package io.github.anthem37.sql.rewiter.core.extension.visitor.impl;
 
+import cn.hutool.core.collection.CollectionUtil;
 import cn.hutool.core.util.ObjectUtil;
 import com.google.common.collect.Lists;
 import io.github.anthem37.sql.rewiter.core.extension.expression.IConditionExpression;
@@ -11,12 +12,9 @@ import lombok.EqualsAndHashCode;
 import lombok.SneakyThrows;
 import net.sf.jsqlparser.expression.Expression;
 import net.sf.jsqlparser.schema.Table;
-import net.sf.jsqlparser.statement.select.FromItem;
-import net.sf.jsqlparser.statement.select.Join;
-import net.sf.jsqlparser.statement.select.ParenthesedSelect;
-import net.sf.jsqlparser.statement.select.PlainSelect;
-import net.sf.jsqlparser.statement.select.SelectVisitorAdapter;
+import net.sf.jsqlparser.statement.select.*;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -71,11 +69,24 @@ public class AddConditionSelectVisitor extends SelectVisitorAdapter implements I
                 addAndExpression4Where(plainSelect, aliasConditionExpression);
             }
         }
-
+        // 处理WITH子句中的子查询
+        List<WithItem> withItemsList = plainSelect.getWithItemsList();
+        if (CollectionUtil.isNotEmpty(withItemsList)) {
+            for (WithItem withItem : withItemsList) {
+                Select withItemSelect = withItem.getSelect();
+                if (ObjectUtil.isNotEmpty(withItemSelect)) {
+                    withItemSelect.accept(this);
+                }
+            }
+        }
+        // 处理SELECT字段列表中的表达式
+        for (SelectItem<?> selectItem : plainSelect.getSelectItems()) {
+            selectItem.accept(new AddConditionExpressionVisitor(this));
+        }
         // 递归处理fromItem（如子查询、嵌套结构）
-        AddConditionFromItemVisitor sieveFromItemVisitor = new AddConditionFromItemVisitor(tableName, conditionExpression);
+        AddConditionFromItemVisitor addConditionFromItemVisitor = new AddConditionFromItemVisitor(tableName, conditionExpression);
         if (fromItem != null) {
-            fromItem.accept(sieveFromItemVisitor);
+            fromItem.accept(addConditionFromItemVisitor);
         }
 
         // 处理所有JOIN表
@@ -92,7 +103,7 @@ public class AddConditionSelectVisitor extends SelectVisitorAdapter implements I
             }
             // 递归处理JOIN右表（如子查询、嵌套结构）
             if (rightItem != null) {
-                rightItem.accept(sieveFromItemVisitor);
+                rightItem.accept(addConditionFromItemVisitor);
             }
         }
 
@@ -102,4 +113,15 @@ public class AddConditionSelectVisitor extends SelectVisitorAdapter implements I
             where.accept(new AddConditionExpressionVisitor(this));
         }
     }
+
+    @Override
+    public void visit(SetOperationList setOpList) {
+        List<Select> selects = setOpList.getSelects();
+        if (CollectionUtil.isNotEmpty(selects)) {
+            for (Select select : selects) {
+                select.accept(this);
+            }
+        }
+    }
+
 }

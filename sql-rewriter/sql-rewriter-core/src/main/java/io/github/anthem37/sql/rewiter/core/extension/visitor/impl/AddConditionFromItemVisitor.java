@@ -48,6 +48,11 @@ public class AddConditionFromItemVisitor extends FromItemVisitorAdapter implemen
         selectBody.accept(addConditionSelectVisitor);
     }
 
+    /**
+     * 访问括号中的FROM子句，递归添加条件
+     *
+     * @param aThis 括号中的FROM子句
+     */
     @Override
     public void visit(ParenthesedFromItem aThis) {
         FromItem leftFromItem = aThis.getFromItem();

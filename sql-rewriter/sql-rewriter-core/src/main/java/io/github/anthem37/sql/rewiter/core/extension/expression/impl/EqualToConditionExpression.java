@@ -24,11 +24,13 @@ public class EqualToConditionExpression extends EqualsTo implements IConditionEx
      */
     @Getter
     private final String tableName;
+
     /**
      * 字段名
      */
     @Getter
     private final String columnName;
+    
     /**
      * 值（支持任意类型，最终会转为SQL表达式）
      */

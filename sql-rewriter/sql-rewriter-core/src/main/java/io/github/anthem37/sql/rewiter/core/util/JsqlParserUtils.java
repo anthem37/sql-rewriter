@@ -124,17 +124,67 @@ public class JsqlParserUtils {
     }
 
     /**
-     * 去除表名或别名两侧的双引号
+     * 去除表名或别名两侧的引号
+     * 支持双引号(")、单引号(')、反引号(`)、方括号([])等常用引号
+     *
+     * @param name 可能被引号包裹的表名
+     * @return 去除引号后的表名
      */
     private static String stripQuotes(String name) {
         if (name == null) {
             return null;
         }
         String trimmed = name.trim();
-        if (trimmed.length() >= 2 && trimmed.startsWith("\"") && trimmed.endsWith("\"")) {
-            return trimmed.substring(1, trimmed.length() - 1);
+        if (trimmed.length() < 2) {
+            return trimmed;
         }
+
+        // 处理双引号
+        if (trimmed.startsWith("\"") && trimmed.endsWith("\"")) {
+            return stripEscapedQuotes(trimmed.substring(1, trimmed.length() - 1));
+        }
+
+        // 处理单引号
+        if (trimmed.startsWith("'") && trimmed.endsWith("'")) {
+            return stripEscapedQuotes(trimmed.substring(1, trimmed.length() - 1));
+        }
+
+        // 处理反引号
+        if (trimmed.startsWith("`") && trimmed.endsWith("`")) {
+            return stripEscapedQuotes(trimmed.substring(1, trimmed.length() - 1));
+        }
+
+        // 处理方括号 (SQL Server)
+        if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+            return stripEscapedQuotes(trimmed.substring(1, trimmed.length() - 1));
+        }
+
         return trimmed;
+    }
+
+    /**
+     * 处理引号内的转义字符
+     * 将双引号内的转义双引号（如""）转换为单引号
+     * 将单引号内的转义单引号（如''）转换为单引号
+     *
+     * @param content 引号内的内容
+     * @return 处理转义后的内容
+     */
+    private static String stripEscapedQuotes(String content) {
+        if (content == null) {
+            return null;
+        }
+
+        // 处理双引号转义 "" -> "
+        String result = content.replace("\"\"", "\"");
+
+        // 处理单引号转义 '' -> '
+        result = result.replace("''", "'");
+
+        // 处理反引号转义 `` -> `
+        result = result.replace("``", "`");
+
+        return result;
     }
 
     /**
