@@ -2,20 +2,17 @@ package io.github.anthem37.sql.rewiter.core.extension.expression.impl;
 
 import io.github.anthem37.sql.rewiter.core.extension.expression.IConditionExpression;
 import lombok.Getter;
-import net.sf.jsqlparser.expression.operators.relational.IsNullExpression;
+import net.sf.jsqlparser.expression.operators.relational.IsBooleanExpression;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 
 /**
- * <p>
- * IS NULL条件表达式
- * 用于生成SQL中的IS NULL条件，例如：column_name IS NULL
- * </p>
+ * 表示 IS TRUE 或 IS FALSE 表达式
  *
  * @author hb28301
- * @since 2025/11/18 19:56:43
+ * @since 2025/11/19 14:36:25
  */
-public class IsNullConditionExpression extends IsNullExpression implements IConditionExpression {
+public class IsBooleanConditionExpression extends IsBooleanExpression implements IConditionExpression {
 
     /**
      * 表名（区分大小写，建议与SQL中表名保持一致）
@@ -31,16 +28,34 @@ public class IsNullConditionExpression extends IsNullExpression implements ICond
     private final String columnName;
 
     /**
-     * 构造IS NULL条件表达式
+     * 是否为NOT条件
+     */
+    @Getter
+    private final Boolean not;
+
+
+    /**
+     * 是否为TRUE条件
+     */
+    @Getter
+    private final Boolean isTrue;
+
+    /**
+     * 构造IS TRUE或IS FALSE条件表达式
      *
      * @param tableName  表名
      * @param columnName 字段名
+     * @param isTrue     是否为TRUE
      */
-    public IsNullConditionExpression(String tableName, String columnName) {
+    public IsBooleanConditionExpression(String tableName, String columnName, boolean not, boolean isTrue) {
         super();
         setLeftExpression(new Column(new Table(tableName), columnName));
+        setIsTrue(isTrue);
+        setNot(not);
         this.tableName = tableName;
         this.columnName = columnName;
+        this.not = not;
+        this.isTrue = isTrue;
     }
 
     /**
@@ -54,7 +69,7 @@ public class IsNullConditionExpression extends IsNullExpression implements ICond
      */
     @Override
     public IConditionExpression reconstructAliasExpression(String alias) {
-        return new IsNullConditionExpression(alias, columnName);
+        return new IsBooleanConditionExpression(alias, columnName, not, isTrue);
     }
 
 }

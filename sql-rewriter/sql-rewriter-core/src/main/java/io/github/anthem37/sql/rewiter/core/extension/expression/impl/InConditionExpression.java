@@ -3,6 +3,8 @@ package io.github.anthem37.sql.rewiter.core.extension.expression.impl;
 import io.github.anthem37.sql.rewiter.core.extension.expression.IConditionExpression;
 import io.github.anthem37.sql.rewiter.core.util.JsqlParserUtils;
 import lombok.Getter;
+import net.sf.jsqlparser.expression.Expression;
+import net.sf.jsqlparser.expression.Parenthesis;
 import net.sf.jsqlparser.expression.operators.relational.ExpressionList;
 import net.sf.jsqlparser.expression.operators.relational.InExpression;
 import net.sf.jsqlparser.schema.Column;
@@ -39,7 +41,7 @@ public class InConditionExpression extends InExpression implements IConditionExp
      * 值（支持任意类型，最终会转为SQL表达式）
      */
     @Getter
-    private final List<Object> columnValue;
+    private final List<?> columnValue;
 
     /**
      * 构造IN条件表达式
@@ -48,10 +50,11 @@ public class InConditionExpression extends InExpression implements IConditionExp
      * @param columnName  字段名
      * @param columnValue 值列表
      */
-    public InConditionExpression(String tableName, String columnName, List<Object> columnValue) {
+    public <T> InConditionExpression(String tableName, String columnName, List<T> columnValue) {
         super();
         setLeftExpression(new Column(new Table(tableName), columnName));
-        setRightExpression(new ExpressionList<>(columnValue.stream().map(JsqlParserUtils::createValueExpression).collect(Collectors.toList())));
+        ExpressionList<Expression> expressions = new ExpressionList<>(columnValue.stream().map(JsqlParserUtils::createValueExpression).collect(Collectors.toList()));
+        setRightExpression(new Parenthesis(expressions));
         this.tableName = tableName;
         this.columnName = columnName;
         this.columnValue = columnValue;
@@ -70,5 +73,5 @@ public class InConditionExpression extends InExpression implements IConditionExp
     public IConditionExpression reconstructAliasExpression(String alias) {
         return new InConditionExpression(alias, columnName, columnValue);
     }
-    
+
 }
