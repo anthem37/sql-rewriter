@@ -143,6 +143,13 @@ classDiagram
         +applyTyped(Insert insert)
     }
 
+    class AddConditionUpdateRule {
+        -String tableName
+        -IConditionExpression conditionExpression
+        -int priority
+        +applyTyped(Update update)
+    }
+
     class IConditionExpression {
         <<interface>>
         +IConditionExpression reconstructAliasExpression(String alias)
@@ -158,6 +165,7 @@ classDiagram
     IRule <|-- ISqlRule
     ISqlRule <|-- AddConditionSelectRule
     ISqlRule <|-- AddColumnInsertRule
+    ISqlRule <|-- AddConditionUpdateRule
     IConditionExpression <|-- EqualToConditionExpression
 ```
 
@@ -304,6 +312,11 @@ public class MultiTenantExample {
                 ),
                 // INSERT 语句自动添加租户ID
                 new AddColumnInsertRule("orders", "tenant_id", tenantId),
+                // UPDATE 语句租户过滤
+                new AddConditionUpdateRule(
+                        "orders",
+                        new EqualToConditionExpression("orders", "tenant_id", tenantId)
+                ),
                 // 用户表租户过滤
                 new AddConditionSelectRule(
                         "users",
@@ -324,6 +337,12 @@ public class MultiTenantExample {
         String rewrittenInsert = engine.run(insertSql);
         System.out.println(rewrittenInsert);
         // 输出: INSERT INTO orders (user_id, amount, tenant_id) VALUES (1, 100.00, 'tenant_123')
+
+        // 测试更新重写
+        String updateSql = "UPDATE orders SET status = 'COMPLETED' WHERE id = 1";
+        String rewrittenUpdate = engine.run(updateSql);
+        System.out.println(rewrittenUpdate);
+        // 输出: UPDATE orders SET status = 'COMPLETED' WHERE (id = 1) AND orders.tenant_id = 'tenant_123'
     }
 }
 ```
@@ -416,7 +435,95 @@ public class DynamicRuleBuilder {
 }
 ```
 
-### 4. 复杂场景处理
+### 4. UPDATE 语句条件增强
+
+`AddConditionUpdateRule` 专门用于 UPDATE 语句的 WHERE 条件增强，支持数据安全更新。
+
+```java
+public class UpdateSecurityExample {
+    public static void main(String[] args) {
+        String currentUser = "admin";
+        List<String> allowedDepartments = Arrays.asList("IT", "FINANCE");
+
+        List<IRule> rules = Arrays.asList(
+                // 租户隔离
+                new AddConditionUpdateRule(
+                        "employees",
+                        new EqualToConditionExpression("employees", "tenant_id", "TENANT_001")
+                ),
+                // 部门权限限制
+                new AddConditionUpdateRule(
+                        "employees",
+                        new InConditionExpression("employees", "department", allowedDepartments)
+                ),
+                // 仅允许更新自己创建的记录（高优先级）
+                new AddConditionUpdateRule(
+                        "sensitive_data",
+                        new EqualToConditionExpression("sensitive_data", "created_by", currentUser),
+                        RulePriority.HIGH
+                ),
+                // 软删除保护（最低优先级，防止误删）
+                new AddConditionUpdateRule(
+                        "users",
+                        new IsNullConditionExpression("users", "deleted_at"),
+                        RulePriority.LOWEST
+                )
+        );
+
+        SQLRewriteEngine engine = new SQLRewriteEngine(rules);
+
+        // 示例1: 基础更新
+        String update1 = "UPDATE employees SET salary = 8000 WHERE id = 123";
+        String result1 = engine.run(update1);
+        // 输出: UPDATE employees SET salary = 8000 WHERE (id = 123) AND employees.tenant_id = 'TENANT_001' AND employees.department IN ('IT', 'FINANCE')
+
+        // 示例2: 无 WHERE 条件的更新（添加租户保护）
+        String update2 = "UPDATE products SET price = price * 1.1";
+        String result2 = engine.run(update2);
+        // 输出: UPDATE products SET price = price * 1.1 WHERE products.tenant_id = 'TENANT_001'
+
+        // 示例3: 复杂 WHERE 条件更新
+        String update3 = "UPDATE employees SET bonus = 1000 WHERE performance_score > 90 OR status = 'STAR'";
+        String result3 = engine.run(update3);
+        // 输出: UPDATE employees SET bonus = 1000 WHERE (performance_score > 90 OR status = 'STAR') AND employees.tenant_id = 'TENANT_001' AND employees.department IN ('IT', 'FINANCE')
+    }
+}
+```
+
+#### UPDATE 规则特性
+
+| 特性        | 描述                    | 示例                                                            |
+|-----------|-----------------------|---------------------------------------------------------------|
+| **条件保护**  | 无 WHERE 时自动添加条件防止全表更新 | `WHERE id = 1` → `WHERE (id = 1) AND tenant_id = 'T1'`        |
+| **括号包裹**  | 原有条件用括号包裹避免优先级问题      | `WHERE a = 1 OR b = 2` → `WHERE (a = 1 OR b = 2) AND ...`     |
+| **别名适配**  | 自动适配表别名               | `UPDATE users u SET ...` → `WHERE ... AND u.tenant_id = 'T1'` |
+| **优先级控制** | 通过优先级控制规则执行顺序         | 安全规则优先级更高                                                     |
+
+#### 表达式支持
+
+UPDATE 规则支持所有条件表达式类型：
+
+```java
+// 等值条件 - 最常用
+new AddConditionUpdateRule("users",new EqualToConditionExpression("users", "tenant_id","T1"));
+
+// IN 条件 - 多值匹配
+        new
+
+AddConditionUpdateRule("products",new InConditionExpression("products", "category",Arrays.asList("A", "B")));
+
+// NULL 条件 - 软删除保护
+        new
+
+AddConditionUpdateRule("orders",new IsNullConditionExpression("orders", "deleted_at"));
+
+// 布尔条件 - 状态检查
+        new
+
+AddConditionUpdateRule("users",new IsBooleanConditionExpression("users", "active",true));
+```
+
+### 5. 复杂场景处理
 
 #### 子查询处理
 
@@ -543,18 +650,81 @@ String filteredSql = softDeleteEngine.run(sql);
 **场景描述**：自动为 INSERT 和 UPDATE 语句添加审计字段。
 
 ```java
-// 审计字段自动添加
-public class AuditRule implements ISqlRule<Insert> {
+// INSERT 审计字段自动添加
+public class InsertAuditRule implements ISqlRule<Insert> {
     @Override
     public void applyTyped(Insert insert) {
         String currentUser = SecurityContextHolder.getCurrentUser();
         Timestamp now = new Timestamp(System.currentTimeMillis());
 
-        // 添加创建人、创建时间、更新人、更新时间
+        // 添加创建人、创建时间
         new AddColumnInsertRule(insert.getTable().getName(), "created_by", currentUser).applyTyped(insert);
         new AddColumnInsertRule(insert.getTable().getName(), "created_at", now).applyTyped(insert);
-        new AddColumnInsertRule(insert.getTable().getName(), "updated_by", currentUser).applyTyped(insert);
-        new AddColumnInsertRule(insert.getTable().getName(), "updated_at", now).applyTyped(insert);
+    }
+}
+
+// UPDATE 审计字段条件控制
+public class UpdateAuditRule implements ISqlRule<Update> {
+    @Override
+    public void applyTyped(Update update) {
+        String currentUser = SecurityContextHolder.getCurrentUser();
+
+        // 只允许更新自己创建的记录
+        AddConditionUpdateRule ownerRule = new AddConditionUpdateRule(
+                update.getTable().getName(),
+                new EqualToConditionExpression(update.getTable().getName(), "created_by", currentUser),
+                RulePriority.HIGH
+        );
+        ownerRule.applyTyped(update);
+
+        // 记录更新时间（通过触发器或应用层）
+        // update.getUpdateSets().add(new ColumnValue(new Column("updated_at"), new TimestampValue()));
+    }
+}
+```
+
+### 5. 数据更新安全控制
+
+**场景描述**：防止意外的全表更新或跨租户数据修改。
+
+```java
+// 更新安全引擎
+public class UpdateSecurityEngine {
+    public static SQLRewriteEngine createSafeUpdateEngine() {
+        return new SQLRewriteEngine(Arrays.asList(
+                // 租户隔离 - 防止跨租户更新
+                new AddConditionUpdateRule("*",
+                        new EqualToConditionExpression("*", "tenant_id", getCurrentTenantId())),
+
+                // 部门权限控制
+                new AddConditionUpdateRule("employee_data",
+                        new InConditionExpression("employee_data", "department", getUserDepartments())),
+
+                // 软删除保护 - 防止更新已删除数据
+                new AddConditionUpdateRule("*",
+                        new IsNullConditionExpression("*", "deleted_at"),
+                        RulePriority.LOWEST),
+
+                // 重要数据权限 - 只有管理员可更新
+                new AddConditionUpdateRule("system_config",
+                        new EqualToConditionExpression("system_config", "updatable_by_admin", true),
+                        RulePriority.HIGHEST)
+        ));
+    }
+
+    // 安全更新示例
+    public static void safeUpdateExample() {
+        SQLRewriteEngine engine = createSafeUpdateEngine();
+
+        // 危险的更新语句（会被安全化）
+        String dangerousSql = "UPDATE users SET status = 'SUSPENDED'";
+        String safeSql = engine.run(dangerousSql);
+        // 输出: UPDATE users SET status = 'SUSPENDED' WHERE users.tenant_id = 'current_tenant' AND users.deleted_at IS NULL
+
+        // 带条件的更新语句（会增加安全条件）
+        String conditionalSql = "UPDATE employee_data SET salary = salary * 1.1 WHERE performance_score > 90";
+        String enhancedSql = engine.run(conditionalSql);
+        // 输出: UPDATE employee_data SET salary = salary * 1.1 WHERE (performance_score > 90) AND employee_data.tenant_id = 'current_tenant' AND employee_data.department IN ('dept1', 'dept2') AND employee_data.deleted_at IS NULL
     }
 }
 ```
@@ -872,6 +1042,7 @@ public class CustomSelectVisitor implements SelectVisitor {
 |--------------------------|--------------------|----------------|
 | `AddConditionSelectRule` | SELECT 添加 WHERE 条件 | SELECT_DEFAULT |
 | `AddColumnInsertRule`    | INSERT 添加列和值       | INSERT_DEFAULT |
+| `AddConditionUpdateRule` | UPDATE 添加 WHERE 条件 | UPDATE_DEFAULT |
 
 ### 内置表达式
 
