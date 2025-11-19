@@ -5,15 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>io.github.anthem37</groupId>
-        <artifactId>sql-rewriter</artifactId>
+        <artifactId>sql-rewriter-plugin</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>sql-rewriter-extension</artifactId>
-    <packaging>pom</packaging>
-    <modules>
-        <module>sql-rewriter-extension-tenant</module>
-    </modules>
+    <artifactId>sql-rewriter-plugin-tenant</artifactId>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
