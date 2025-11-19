@@ -30,5 +30,5 @@ public class SqlFormatUtils {
 
         return cleaned;
     }
-    
+
 }

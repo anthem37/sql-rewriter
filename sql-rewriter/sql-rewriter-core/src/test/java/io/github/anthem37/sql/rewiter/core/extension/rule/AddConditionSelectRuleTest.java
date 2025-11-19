@@ -538,7 +538,7 @@ public class AddConditionSelectRuleTest {
     public void testMultipleRuleApplication() throws Exception {
         Statement statement = CCJSqlParserUtil.parse("SELECT * FROM tenant t JOIN orders o ON t.id = o.tenant_id");
         Select select = (Select) statement;
-        
+
         // 先应用租户规则
         createTenantRule().applyTyped(select);
         // 再应用订单规则
@@ -547,7 +547,7 @@ public class AddConditionSelectRuleTest {
         PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
         // 验证WHERE条件包含租户规则
         assertTrue(plainSelect.getWhere().toString().contains("t.tenant_id = 'TENANT_1'"));
-        
+
         List<Join> joins = plainSelect.getJoins();
         // 验证JOIN条件包含订单规则
         assertTrue(joins.get(0).getOnExpression().toString().contains("o.tenant_id = 'TENANT_1'"));
