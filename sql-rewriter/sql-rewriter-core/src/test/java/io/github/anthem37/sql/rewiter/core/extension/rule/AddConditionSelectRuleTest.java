@@ -1,6 +1,7 @@
 package io.github.anthem37.sql.rewiter.core.extension.rule;
 
 import io.github.anthem37.sql.rewiter.core.extension.expression.impl.EqualToConditionExpression;
+import io.github.anthem37.sql.rewiter.core.extension.expression.impl.IsBooleanConditionExpression;
 import io.github.anthem37.sql.rewiter.core.extension.expression.impl.IsNullConditionExpression;
 import io.github.anthem37.sql.rewiter.core.rule.RulePriority;
 import net.sf.jsqlparser.expression.Parenthesis;
@@ -435,10 +436,40 @@ public class AddConditionSelectRuleTest {
     public void testBooleanValue() throws Exception {
         Statement statement = CCJSqlParserUtil.parse("SELECT * FROM tenant");
         Select select = (Select) statement;
-        new AddConditionSelectRule("tenant", new EqualToConditionExpression("tenant", "is_active", true)).applyTyped(select);
+        new AddConditionSelectRule("tenant", new IsBooleanConditionExpression("tenant", "is_active", false, true)).applyTyped(select);
 
         PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
-        assertEquals("tenant.is_active = 'true'", plainSelect.getWhere().toString());
+        assertEquals("tenant.is_active IS TRUE", plainSelect.getWhere().toString());
+    }
+
+    @Test
+    public void testBooleanValueIsFalse() throws Exception {
+        Statement statement = CCJSqlParserUtil.parse("SELECT * FROM tenant");
+        Select select = (Select) statement;
+        new AddConditionSelectRule("tenant", new IsBooleanConditionExpression("tenant", "is_active", false, false)).applyTyped(select);
+
+        PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
+        assertEquals("tenant.is_active IS FALSE", plainSelect.getWhere().toString());
+    }
+
+    @Test
+    public void testBooleanValueIsNotTrue() throws Exception {
+        Statement statement = CCJSqlParserUtil.parse("SELECT * FROM tenant");
+        Select select = (Select) statement;
+        new AddConditionSelectRule("tenant", new IsBooleanConditionExpression("tenant", "is_active", true, true)).applyTyped(select);
+
+        PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
+        assertEquals("tenant.is_active IS NOT TRUE", plainSelect.getWhere().toString());
+    }
+
+    @Test
+    public void testBooleanValueIsNotFalse() throws Exception {
+        Statement statement = CCJSqlParserUtil.parse("SELECT * FROM tenant");
+        Select select = (Select) statement;
+        new AddConditionSelectRule("tenant", new IsBooleanConditionExpression("tenant", "is_active", true, false)).applyTyped(select);
+
+        PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
+        assertEquals("tenant.is_active IS NOT FALSE", plainSelect.getWhere().toString());
     }
 
     // ========== 边界条件 ==========

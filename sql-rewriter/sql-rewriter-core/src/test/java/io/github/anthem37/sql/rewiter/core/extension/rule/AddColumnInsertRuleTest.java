@@ -106,23 +106,24 @@ public class AddColumnInsertRuleTest {
     public void booleanValueBestPractices() throws Exception {
         // 测试布尔值的不同表示方式
 
-        // 1. 当前实现：布尔值转换为字符串 (MySQL/PostgreSQL都能正确处理)
+        // 1. 不推荐：布尔值转换为字符串 (虽然MySQL/PostgreSQL都能正确处理，但不明确)
         Statement statement1 = CCJSqlParserUtil.parse("INSERT INTO tenant(name) VALUES ('NAME')");
         Insert insert1 = (Insert) statement1;
         AddColumnInsertRule rule1 = new AddColumnInsertRule("tenant", "is_active", true);
         rule1.applyTyped(insert1);
         assertEquals("INSERT INTO tenant (name, is_active) VALUES ('NAME', 'true')", insert1.toString());
 
-        // 2. 更好的做法：直接使用数字 (MySQL中1/0，PostgreSQL中1/0)
+        // 2. 推荐：直接使用数字 (MySQL中1/0，PostgreSQL中1/0都表示布尔值)
         Statement statement2 = CCJSqlParserUtil.parse("INSERT INTO tenant(name) VALUES ('NAME')");
         Insert insert2 = (Insert) statement2;
         AddColumnInsertRule rule2 = new AddColumnInsertRule("tenant", "is_active", 1L);
         rule2.applyTyped(insert2);
         assertEquals("INSERT INTO tenant (name, is_active) VALUES ('NAME', 1)", insert2.toString());
 
-        // 3. 说明：虽然字符串'true'能被正确处理，但数字1更明确且性能更好
-        // MySQL: BOOLEAN = TINYINT(1), 所以1是原生格式
-        // PostgreSQL: 1会自动转换为true，也是标准的布尔表示
+        // 3. 说明：使用数字1和0是布尔值的最佳实践
+        // MySQL: BOOLEAN = TINYINT(1), 所以1/0是原生格式
+        // PostgreSQL: 1/0会自动转换为true/false，也是标准的布尔表示
+        // 相比字符串'true'/'false'，数字1/0更明确、性能更好且跨数据库兼容性更强
     }
 
     @Test
@@ -141,13 +142,12 @@ public class AddColumnInsertRuleTest {
         rule2.applyTyped(insert2);
         assertEquals("INSERT INTO tenant (name, salary) VALUES ('NAME', 5000.5)", insert2.toString());
 
-        // 测试布尔值类型 - ⚠️ 当前实现将布尔值转换为字符串
-        // 虽然MySQL和PostgreSQL都能正确处理'true'字符串，但推荐使用更明确的方式
+        // 测试布尔值类型 - 推荐使用数字而不是布尔值
         Statement statement3 = CCJSqlParserUtil.parse("INSERT INTO tenant(name) VALUES ('NAME')");
         Insert insert3 = (Insert) statement3;
-        AddColumnInsertRule rule3 = new AddColumnInsertRule("tenant", "is_active", true);
+        AddColumnInsertRule rule3 = new AddColumnInsertRule("tenant", "is_active", 1L);
         rule3.applyTyped(insert3);
-        assertEquals("INSERT INTO tenant (name, is_active) VALUES ('NAME', 'true')", insert3.toString());
+        assertEquals("INSERT INTO tenant (name, is_active) VALUES ('NAME', 1)", insert3.toString());
     }
 
     @Test
