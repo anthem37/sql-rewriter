@@ -11,6 +11,7 @@
     <modules>
         <module>sql-rewriter-bom</module>
         <module>sql-rewriter-core</module>
+        <module>sql-rewriter-extension</module>
     </modules>
 
     <properties>
