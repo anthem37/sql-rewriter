@@ -172,30 +172,190 @@ public class JsqlParserUtilsTest {
         assertNull(result);
     }
 
+    // ========== stripQuotes 方法的全面测试 ==========
+
     @Test
-    public void stripQuotesShouldHandleQuotedNames() {
-        // 通过equalToTableName间接测试stripQuotes方法
+    public void stripQuotesShouldHandleDoubleQuotes() {
         Table table1 = new Table("\"Tenant\"");
+        Table table2 = new Table("\"my_table\"");
+        Table table3 = new Table("\"123_table\"");
 
         assertTrue(JsqlParserUtils.equalToTableName("Tenant", table1));
         assertTrue(JsqlParserUtils.equalToTableName("\"Tenant\"", table1));
+
+        assertTrue(JsqlParserUtils.equalToTableName("my_table", table2));
+        assertTrue(JsqlParserUtils.equalToTableName("\"my_table\"", table2));
+
+        assertTrue(JsqlParserUtils.equalToTableName("123_table", table3));
+    }
+
+    @Test
+    public void stripQuotesShouldHandleSingleQuotes() {
+        Table table1 = new Table("'Tenant'");
+        Table table2 = new Table("'my_table'");
+
+        assertTrue(JsqlParserUtils.equalToTableName("Tenant", table1));
+        assertTrue(JsqlParserUtils.equalToTableName("'Tenant'", table1));
+
+        assertTrue(JsqlParserUtils.equalToTableName("my_table", table2));
+    }
+
+    @Test
+    public void stripQuotesShouldHandleBackticks() {
+        Table table1 = new Table("`Tenant`");
+        Table table2 = new Table("`my-table`");
+        Table table3 = new Table("`123 table`");
+
+        assertTrue(JsqlParserUtils.equalToTableName("Tenant", table1));
+        assertTrue(JsqlParserUtils.equalToTableName("`Tenant`", table1));
+
+        assertTrue(JsqlParserUtils.equalToTableName("my-table", table2));
+        assertTrue(JsqlParserUtils.equalToTableName("123 table", table3));
+    }
+
+    @Test
+    public void stripQuotesShouldHandleSquareBrackets() {
+        Table table1 = new Table("[Tenant]");
+        Table table2 = new Table("[my-table]");
+        Table table3 = new Table("[123 table]");
+
+        assertTrue(JsqlParserUtils.equalToTableName("Tenant", table1));
+        assertTrue(JsqlParserUtils.equalToTableName("[Tenant]", table1));
+
+        assertTrue(JsqlParserUtils.equalToTableName("my-table", table2));
+        assertTrue(JsqlParserUtils.equalToTableName("123 table", table3));
+    }
+
+    @Test
+    public void stripQuotesShouldHandleEscapedQuotes() {
+        // 测试转义引号的处理
+        Table table1 = new Table("\"My\"\"Table\"");  // "My""Table" -> My"Table
+        Table table2 = new Table("'My''Table'");    // 'My''Table' -> My'Table
+        Table table3 = new Table("`My``Table`");    // `My``Table` -> My`Table
+
+        assertTrue(JsqlParserUtils.equalToTableName("My\"Table", table1));
+        assertTrue(JsqlParserUtils.equalToTableName("My'Table", table2));
+        assertTrue(JsqlParserUtils.equalToTableName("My`Table", table3));
     }
 
     @Test
     public void stripQuotesShouldHandleUnquotedNames() {
         Table table1 = new Table("Tenant");
+        Table table2 = new Table("my_table");
+        Table table3 = new Table("123_table");
+        Table table4 = new Table("my-table");
 
         assertTrue(JsqlParserUtils.equalToTableName("Tenant", table1));
         assertTrue(JsqlParserUtils.equalToTableName("\"Tenant\"", table1));
+
+        assertTrue(JsqlParserUtils.equalToTableName("my_table", table2));
+        assertTrue(JsqlParserUtils.equalToTableName("`my_table`", table2));
+
+        assertTrue(JsqlParserUtils.equalToTableName("123_table", table3));
+        assertTrue(JsqlParserUtils.equalToTableName("[123_table]", table3));
+
+        assertTrue(JsqlParserUtils.equalToTableName("my-table", table4));
+        assertTrue(JsqlParserUtils.equalToTableName("`my-table`", table4));
     }
 
     @Test
     public void stripQuotesShouldHandlePartialQuotes() {
         // 测试只有单侧引号的情况 - 只有完整的引号对才会被去除
         Table table1 = new Table("\"Tenant");
+        Table table2 = new Table("Tenant\"");
+        Table table3 = new Table("'Tenant");
+        Table table4 = new Table("Tenant'");
+        Table table5 = new Table("`Tenant");
+        Table table6 = new Table("Tenant`");
+        Table table7 = new Table("[Tenant");
+        Table table8 = new Table("Tenant]");
 
         assertTrue(JsqlParserUtils.equalToTableName("\"Tenant", table1));
         assertFalse(JsqlParserUtils.equalToTableName("Tenant", table1));
+
+        assertTrue(JsqlParserUtils.equalToTableName("Tenant\"", table2));
+        assertFalse(JsqlParserUtils.equalToTableName("Tenant", table2));
+
+        assertTrue(JsqlParserUtils.equalToTableName("'Tenant", table3));
+        assertFalse(JsqlParserUtils.equalToTableName("Tenant", table3));
+
+        assertTrue(JsqlParserUtils.equalToTableName("Tenant'", table4));
+        assertFalse(JsqlParserUtils.equalToTableName("Tenant", table4));
+
+        assertTrue(JsqlParserUtils.equalToTableName("`Tenant", table5));
+        assertFalse(JsqlParserUtils.equalToTableName("Tenant", table5));
+
+        assertTrue(JsqlParserUtils.equalToTableName("Tenant`", table6));
+        assertFalse(JsqlParserUtils.equalToTableName("Tenant", table6));
+
+        assertTrue(JsqlParserUtils.equalToTableName("[Tenant", table7));
+        assertFalse(JsqlParserUtils.equalToTableName("Tenant", table7));
+
+        assertTrue(JsqlParserUtils.equalToTableName("Tenant]", table8));
+        assertFalse(JsqlParserUtils.equalToTableName("Tenant", table8));
+    }
+
+    @Test
+    public void stripQuotesShouldHandleMixedQuoteTypes() {
+        // 测试混合引号类型 - 不匹配的引号对不会被去除
+        Table table1 = new Table("\"Tenant'");
+        Table table2 = new Table("'Tenant\"");
+        Table table3 = new Table("`Tenant\"");
+        Table table4 = new Table("\"Tenant`");
+        Table table5 = new Table("[Tenant\"");
+
+        assertTrue(JsqlParserUtils.equalToTableName("\"Tenant'", table1));
+        assertFalse(JsqlParserUtils.equalToTableName("Tenant", table1));
+
+        assertTrue(JsqlParserUtils.equalToTableName("'Tenant\"", table2));
+        assertFalse(JsqlParserUtils.equalToTableName("Tenant", table2));
+
+        assertTrue(JsqlParserUtils.equalToTableName("`Tenant\"", table3));
+        assertFalse(JsqlParserUtils.equalToTableName("Tenant", table3));
+
+        assertTrue(JsqlParserUtils.equalToTableName("\"Tenant`", table4));
+        assertFalse(JsqlParserUtils.equalToTableName("Tenant", table4));
+
+        assertTrue(JsqlParserUtils.equalToTableName("[Tenant\"", table5));
+        assertFalse(JsqlParserUtils.equalToTableName("Tenant", table5));
+    }
+
+    @Test
+    public void stripQuotesShouldHandleEdgeCases() {
+        // 测试边界情况 - 专注于引号去除的核心功能
+
+        Table table1 = new Table("\"");  // 单个双引号，不会去除引号
+        assertTrue(JsqlParserUtils.equalToTableName("\"", table1));
+
+        Table table2 = new Table("'");  // 单个单引号，不会去除引号
+        assertTrue(JsqlParserUtils.equalToTableName("'", table2));
+
+        Table table3 = new Table("`");  // 单个反引号，不会去除引号
+        assertTrue(JsqlParserUtils.equalToTableName("`", table3));
+
+        Table table4 = new Table("[");  // 单个左括号，不会去除引号
+        assertTrue(JsqlParserUtils.equalToTableName("[", table4));
+
+        Table table5 = new Table("]");  // 单个右括号，不会去除引号
+        assertTrue(JsqlParserUtils.equalToTableName("]", table5));
+    }
+
+    @Test
+    public void stripQuotesShouldHandleComplexRealWorldNames() {
+        // 测试真实世界中复杂的表名
+        Table table1 = new Table("\"user_info\"");  // 常规命名
+        Table table2 = new Table("`order-items`");  // 带连字符
+        Table table3 = new Table("[2023-sales]");   // 带数字和连字符
+        Table table4 = new Table("'My \"Special\" Table'");  // 带转义引号
+        Table table5 = new Table("`table with spaces`");  // 带空格
+        Table table6 = new Table("[123 abc]");  // 数字开头，带空格
+
+        assertTrue(JsqlParserUtils.equalToTableName("user_info", table1));
+        assertTrue(JsqlParserUtils.equalToTableName("order-items", table2));
+        assertTrue(JsqlParserUtils.equalToTableName("2023-sales", table3));
+        assertTrue(JsqlParserUtils.equalToTableName("My \"Special\" Table", table4));
+        assertTrue(JsqlParserUtils.equalToTableName("table with spaces", table5));
+        assertTrue(JsqlParserUtils.equalToTableName("123 abc", table6));
     }
 
     @Test
@@ -235,5 +395,65 @@ public class JsqlParserUtilsTest {
 
         Table table2 = new Table("  \"tenant\"  ");
         assertTrue(JsqlParserUtils.equalToTableName("tenant", table2));
+    }
+
+    @Test
+    public void equalToTableNameShouldHandleComplexAliasWithQuotes() {
+        // 测试复杂别名的引号处理
+        Table table1 = new Table("tenant");
+        table1.setAlias(new Alias("\"t_alias\""));
+        assertTrue(JsqlParserUtils.equalToTableName("t_alias", table1));
+        assertTrue(JsqlParserUtils.equalToTableName("\"t_alias\"", table1));
+
+        Table table2 = new Table("tenant");
+        table2.setAlias(new Alias("`t-alias`"));
+        assertTrue(JsqlParserUtils.equalToTableName("t-alias", table2));
+        assertTrue(JsqlParserUtils.equalToTableName("`t-alias`", table2));
+
+        Table table3 = new Table("tenant");
+        table3.setAlias(new Alias("[t-alias]"));
+        assertTrue(JsqlParserUtils.equalToTableName("t-alias", table3));
+        assertTrue(JsqlParserUtils.equalToTableName("[t-alias]", table3));
+
+        Table table4 = new Table("tenant");
+        table4.setAlias(new Alias("'t-alias'"));
+        assertTrue(JsqlParserUtils.equalToTableName("t-alias", table4));
+        assertTrue(JsqlParserUtils.equalToTableName("'t-alias'", table4));
+    }
+
+    @Test
+    public void equalToTableNameShouldHandleSchemaQualifiedNames() {
+        // 测试模式限定名称的处理 - 专注于stripQuotes本身的功能
+
+        Table table1 = new Table("\"public\".\"tenant\"");
+        assertTrue(JsqlParserUtils.equalToTableName("\"public\".\"tenant\"", table1));  // 直接匹配
+
+        Table table2 = new Table("`public`.`tenant`");
+        assertTrue(JsqlParserUtils.equalToTableName("`public`.`tenant`", table2));
+
+        Table table3 = new Table("[public].[tenant]");
+        assertTrue(JsqlParserUtils.equalToTableName("[public].[tenant]", table3));
+
+        // 测试非引用的模式限定名称
+        Table table4 = new Table("public.tenant");
+        assertTrue(JsqlParserUtils.equalToTableName("public.tenant", table4));
+    }
+
+    @Test
+    public void equalToTableNameShouldHandleMixedQuoteScenarios() {
+        // 测试混合引号场景
+        Table table1 = new Table("tenant");
+        table1.setAlias(new Alias("\"t_alias\""));
+        assertTrue(JsqlParserUtils.equalToTableName("t_alias", table1));
+
+        Table table2 = new Table("\"tenant\"");
+        table2.setAlias(new Alias("t_alias"));
+        assertTrue(JsqlParserUtils.equalToTableName("tenant", table2));
+        assertTrue(JsqlParserUtils.equalToTableName("t_alias", table2));
+
+        Table table3 = new Table("`tenant`");
+        table3.setAlias(new Alias("[t_alias]"));
+        assertTrue(JsqlParserUtils.equalToTableName("tenant", table3));
+        assertTrue(JsqlParserUtils.equalToTableName("t_alias", table3));
     }
 }
