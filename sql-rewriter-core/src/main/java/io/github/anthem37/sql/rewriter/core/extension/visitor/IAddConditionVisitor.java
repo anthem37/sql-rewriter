@@ -33,10 +33,10 @@ public interface IAddConditionVisitor {
         Expression where = plainSelect.getWhere();
         if (ObjectUtil.isEmpty(where)) {
             plainSelect.setWhere(expression);
-        } else {
-            // 用括号包裹原有条件，避免OR优先级问题
-            plainSelect.setWhere(new AndExpression(new Parenthesis(where), expression));
+            return;
         }
+        // 用括号包裹原有条件，避免OR优先级问题
+        plainSelect.setWhere(new AndExpression(new Parenthesis(where), expression));
     }
 
     /**
