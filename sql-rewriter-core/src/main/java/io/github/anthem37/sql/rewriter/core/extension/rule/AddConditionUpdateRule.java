@@ -78,13 +78,14 @@ public class AddConditionUpdateRule implements ISqlRule<Update> {
             return;
         }
         String alias = JsqlParserUtils.getAlias(table);
+        IConditionExpression reconstructAliasExpression = conditionExpression.reconstructAliasExpression(alias);
         Expression where = statement.getWhere();
         if (ObjectUtil.isNull(where)) {
-            statement.setWhere(conditionExpression.reconstructAliasExpression(alias));
+            statement.setWhere(reconstructAliasExpression);
             return;
         }
         // 用括号包裹原有条件，避免OR优先级问题
-        statement.setWhere(new AndExpression(new Parenthesis(where), conditionExpression));
+        statement.setWhere(new AndExpression(new Parenthesis(where), reconstructAliasExpression));
     }
 
 }
