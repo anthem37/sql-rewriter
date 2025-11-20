@@ -2,12 +2,8 @@ package io.github.anthem37.sql.rewriter.core.extension.rule;
 
 import io.github.anthem37.sql.rewriter.core.rule.ICombineSqlRule;
 import io.github.anthem37.sql.rewriter.core.rule.ISqlRule;
-import io.github.anthem37.sql.rewriter.core.util.RuleUtils;
 import lombok.Getter;
 import net.sf.jsqlparser.statement.Statement;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * 组合SQL规则抽象类
@@ -18,21 +14,15 @@ import java.util.List;
 @Getter
 public abstract class AbstractCombineSqlRule implements ICombineSqlRule {
 
-    private final List<ISqlRule<?>> rules;
-
-    public AbstractCombineSqlRule(List<ISqlRule<?>> rules) {
-        this.rules = Collections.unmodifiableList(RuleUtils.sortSqlRulesByPriority(rules));
-    }
-
     @Override
     public boolean match(Statement statement) {
 
-        return rules.stream().anyMatch(sqlRule -> sqlRule.match(statement));
+        return getRules().stream().anyMatch(sqlRule -> sqlRule.match(statement));
     }
 
     @Override
     public void apply(Statement statement) {
-        for (ISqlRule<?> rule : rules) {
+        for (ISqlRule<?> rule : getRules()) {
             rule.apply(statement);
         }
     }
