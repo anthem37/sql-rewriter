@@ -27,7 +27,7 @@ public class TenantUtils {
      */
     public static TenantRule convert2TenantRule(TenantConfig tenantConfig) {
 
-        return new TenantRule(tenantConfig.getTableNames(), tenantConfig.getColumnName(), tenantConfig.getColumnValue(), tenantConfig.getPriority());
+        return new TenantRule(tenantConfig.getTableNames(), tenantConfig.getColumnName(), tenantConfig.getInsertColumnValue(), tenantConfig.getUpdateConditionColumnValue(), tenantConfig.getSelectConditionColumnValue(), tenantConfig.getPriority());
     }
 
     /**
@@ -62,10 +62,10 @@ public class TenantUtils {
             HOLDER.set(config);
 
             if (Objects.isNull(oldConfig)) {
-                log.debug("设置租户配置: table={}, column={}, value={}", GsonUtils.toJson(config.getTableNames()), config.getColumnName(), config.getColumnValue());
+                log.debug("设置租户配置: table={}, column={}, insertValue={}, updateConditionValue={}, selectConditionValue={}", GsonUtils.toJson(config.getTableNames()), config.getColumnName(), config.getInsertColumnValue(), config.getUpdateConditionColumnValue(), config.getSelectConditionColumnValue());
                 return;
             }
-            log.debug("更新租户配置: 从 table={}, column={}, value={} 更新为 table={}, column={}, value={}", GsonUtils.toJson(oldConfig.getTableNames()), oldConfig.getColumnName(), oldConfig.getColumnValue(), GsonUtils.toJson(config.getTableNames()), config.getColumnName(), config.getColumnValue());
+            log.debug("更新租户配置: 从 table={}, column={}, insertValue={}, updateConditionValue={}, selectConditionValue={} 更新为 table={}, column={}, insertValue={}, updateConditionValue={}, selectConditionValue={}", GsonUtils.toJson(oldConfig.getTableNames()), oldConfig.getColumnName(), oldConfig.getInsertColumnValue(), oldConfig.getUpdateConditionColumnValue(), oldConfig.getSelectConditionColumnValue(), GsonUtils.toJson(config.getTableNames()), config.getColumnName(), config.getInsertColumnValue(), config.getUpdateConditionColumnValue(), config.getSelectConditionColumnValue());
         }
 
         /**
@@ -92,7 +92,7 @@ public class TenantUtils {
         public static void remove() {
             TenantConfig config = HOLDER.get();
             if (Objects.nonNull(config)) {
-                log.debug("移除租户配置: table={}, column={}, value={}", GsonUtils.toJson(config.getTableNames()), config.getColumnName(), config.getColumnValue());
+                log.debug("移除租户配置: table={}, column={}, insertValue={}, updateConditionValue={}, selectConditionValue={}", GsonUtils.toJson(config.getTableNames()), config.getColumnName(), config.getInsertColumnValue(), config.getUpdateConditionColumnValue(), config.getSelectConditionColumnValue());
             }
             HOLDER.remove();
         }

@@ -1,9 +1,11 @@
 package io.github.anthem37.sql.rewriter.plugin.tenant.config;
 
+import cn.hutool.core.util.ObjectUtil;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * 租户配置类
@@ -34,9 +36,28 @@ public class TenantConfig {
     private final String columnName;
 
     /**
-     * 字段值
+     * 插入时字段值提供函数
+     *
+     * <p>用于动态提供插入语句中租户字段的实际值。
+     * 例如，从当前登录用户上下文获取当前租户 ID。
      */
-    private final Object columnValue;
+    private final Supplier<?> insertColumnValueSupplier;
+
+    /**
+     * 更新时WHERE条件字段值提供函数
+     *
+     * <p>用于动态提供更新语句中租户过滤条件的实际值。
+     * 例如，从当前登录用户上下文获取当前租户 ID。
+     */
+    private final Supplier<?> updateConditionColumnValueSupplier;
+
+    /**
+     * 查询时WHERE条件字段值提供函数
+     *
+     * <p>用于动态提供查询语句中租户过滤条件的实际值。
+     * 例如，从当前登录用户上下文获取当前租户 ID。
+     */
+    private final Supplier<?> selectConditionColumnValueSupplier;
 
     /**
      * 规则优先级
@@ -52,4 +73,44 @@ public class TenantConfig {
      * </ul>
      */
     private final int priority;
+
+    /**
+     * 获取插入时字段值
+     *
+     * <p>通过调用字段值提供函数获取实际的租户字段值。
+     * 如果提供函数为 {@code null}，则返回 {@code null}。
+     *
+     * @return 租户字段值，或 {@code null} 如果提供函数为 {@code null}
+     */
+    public Object getInsertColumnValue() {
+
+        return ObjectUtil.isNull(insertColumnValueSupplier) ? null : insertColumnValueSupplier.get();
+    }
+
+    /**
+     * 获取更新时WHERE条件字段值
+     *
+     * <p>通过调用字段值提供函数获取实际的租户过滤条件值。
+     * 如果提供函数为 {@code null}，则返回 {@code null}。
+     *
+     * @return 租户过滤条件值，或 {@code null} 如果提供函数为 {@code null}
+     */
+    public Object getUpdateConditionColumnValue() {
+
+        return ObjectUtil.isNull(updateConditionColumnValueSupplier) ? null : updateConditionColumnValueSupplier.get();
+    }
+
+    /**
+     * 获取查询时WHERE条件字段值
+     *
+     * <p>通过调用字段值提供函数获取实际的租户过滤条件值。
+     * 如果提供函数为 {@code null}，则返回 {@code null}。
+     *
+     * @return 租户过滤条件值，或 {@code null} 如果提供函数为 {@code null}
+     */
+    public Object getSelectConditionColumnValue() {
+
+        return ObjectUtil.isNull(selectConditionColumnValueSupplier) ? null : selectConditionColumnValueSupplier.get();
+    }
+
 }
