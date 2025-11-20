@@ -1,10 +1,7 @@
 package io.github.anthem37.sql.rewriter.plugin.tenant.rule;
 
 import com.google.common.collect.Lists;
-import io.github.anthem37.sql.rewriter.core.extension.rule.AbstractCombineSqlRule;
-import io.github.anthem37.sql.rewriter.core.extension.rule.AddColumnInsertRule;
-import io.github.anthem37.sql.rewriter.core.extension.rule.AddConditionSelectRule;
-import io.github.anthem37.sql.rewriter.core.extension.rule.AddConditionUpdateRule;
+import io.github.anthem37.sql.rewriter.core.extension.rule.*;
 import io.github.anthem37.sql.rewriter.core.rule.RulePriority;
 import io.github.anthem37.sql.rewriter.core.util.ConditionExpressionUtils;
 import io.github.anthem37.sql.rewriter.core.util.GsonUtils;
@@ -51,6 +48,11 @@ public class TenantRule extends AbstractCombineSqlRule {
     private final Object insertColumnValue;
 
     /**
+     * 删除时WHERE条件字段值
+     */
+    private final Object deleteConditionColumnValue;
+
+    /**
      * 更新时WHERE条件字段值
      */
     private final Object updateConditionColumnValue;
@@ -73,19 +75,25 @@ public class TenantRule extends AbstractCombineSqlRule {
         this(tableNames, columnName, columnValue, columnValue, columnValue, priority);
     }
 
-    public TenantRule(List<String> tableNames, String columnName, Object insertColumnValue, Object updateConditionColumnValue, Object selectConditionColumnValue) {
-        this(tableNames, columnName, insertColumnValue, updateConditionColumnValue, selectConditionColumnValue, RulePriority.INSERT_DEFAULT);
+    public TenantRule(List<String> tableNames, String columnName, Object insertColumnValue, Object deleteConditionColumnValue, Object updateConditionColumnValue, Object selectConditionColumnValue) {
+        this(tableNames, columnName, insertColumnValue, deleteConditionColumnValue, updateConditionColumnValue, selectConditionColumnValue, RulePriority.INSERT_DEFAULT);
     }
 
-    public TenantRule(List<String> tableNames, String columnName, Object insertColumnValue, Object updateConditionColumnValue, Object selectConditionColumnValue, int priority) {
-        super(tableNames.stream().flatMap(tableName -> Lists.newArrayList(new AddColumnInsertRule(tableName, columnName, insertColumnValue), new AddConditionUpdateRule(tableName, ConditionExpressionUtils.createAdaptiveCondition(tableName, columnName, updateConditionColumnValue)), new AddConditionSelectRule(tableName, ConditionExpressionUtils.createAdaptiveCondition(tableName, columnName, selectConditionColumnValue))).stream()).collect(Collectors.toList()));
+    public TenantRule(List<String> tableNames, String columnName, Object insertColumnValue, Object deleteConditionColumnValue, Object updateConditionColumnValue, Object selectConditionColumnValue, int priority) {
+        super(tableNames.stream().flatMap(tableName -> Lists.newArrayList(
+                        new AddColumnInsertRule(tableName, columnName, insertColumnValue),
+                        new AddConditionDeleteRule(tableName, ConditionExpressionUtils.createAdaptiveCondition(tableName, columnName, deleteConditionColumnValue)),
+                        new AddConditionUpdateRule(tableName, ConditionExpressionUtils.createAdaptiveCondition(tableName, columnName, updateConditionColumnValue)),
+                        new AddConditionSelectRule(tableName, ConditionExpressionUtils.createAdaptiveCondition(tableName, columnName, selectConditionColumnValue)))
+                .stream()).collect(Collectors.toList()));
         this.tableNames = tableNames;
         this.columnName = columnName;
         this.insertColumnValue = insertColumnValue;
+        this.deleteConditionColumnValue = deleteConditionColumnValue;
         this.updateConditionColumnValue = updateConditionColumnValue;
         this.selectConditionColumnValue = selectConditionColumnValue;
         this.priority = priority;
-        log.debug("创建租户规则: table={}, column={}, insertValue={}, updateConditionValue={}, selectConditionValue={}, priority={}", GsonUtils.toJson(tableNames), columnName, insertColumnValue, updateConditionColumnValue, selectConditionColumnValue, priority);
+        log.debug("创建租户规则: table={}, column={}, insertValue={}, deleteConditionValue={}, updateConditionValue={}, selectConditionValue={}, priority={}", GsonUtils.toJson(tableNames), columnName, insertColumnValue, deleteConditionColumnValue, updateConditionColumnValue, selectConditionColumnValue, priority);
     }
 
     @Override

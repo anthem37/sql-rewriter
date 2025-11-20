@@ -1,12 +1,16 @@
 package io.github.anthem37.sql.rewriter.plugin.tenant.util;
 
 import com.alibaba.ttl.TransmittableThreadLocal;
+import com.google.common.collect.Lists;
 import io.github.anthem37.sql.rewriter.core.util.GsonUtils;
 import io.github.anthem37.sql.rewriter.plugin.tenant.config.TenantConfig;
 import io.github.anthem37.sql.rewriter.plugin.tenant.rule.TenantRule;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * 租户工具类
@@ -25,9 +29,12 @@ public class TenantUtils {
      * @param tenantConfig 租户配置对象，不能为null
      * @return 对应的租户规则对象
      */
-    public static TenantRule convert2TenantRule(TenantConfig tenantConfig) {
+    public static List<TenantRule> convert2TenantRules(TenantConfig tenantConfig) {
 
-        return new TenantRule(tenantConfig.getTableNames(), tenantConfig.getColumnName(), tenantConfig.getInsertColumnValue(), tenantConfig.getUpdateConditionColumnValue(), tenantConfig.getSelectConditionColumnValue(), tenantConfig.getPriority());
+        return Optional.ofNullable(tenantConfig.getConfigItems()).orElseGet(Lists::newArrayList)
+                .stream()
+                .map(configItem -> new TenantRule(configItem.getTableNames(), configItem.getColumnName(), configItem.getInsertColumnValue(), configItem.getUpdateConditionColumnValue(), configItem.getSelectConditionColumnValue(), configItem.getPriority()))
+                .collect(Collectors.toList());
     }
 
     /**
@@ -53,19 +60,14 @@ public class TenantUtils {
          * @param config 租户配置对象，不能为null
          */
         public static void set(TenantConfig config) {
-            if (Objects.isNull(config)) {
-                log.debug("忽略设置null租户配置，线程ID: {}", Thread.currentThread().getId());
-                return;
-            }
-
             TenantConfig oldConfig = HOLDER.get();
             HOLDER.set(config);
 
             if (Objects.isNull(oldConfig)) {
-                log.debug("设置租户配置: table={}, column={}, insertValue={}, updateConditionValue={}, selectConditionValue={}", GsonUtils.toJson(config.getTableNames()), config.getColumnName(), config.getInsertColumnValue(), config.getUpdateConditionColumnValue(), config.getSelectConditionColumnValue());
+                log.debug("设置租户配置: newConfig={}", GsonUtils.toJson(config));
                 return;
             }
-            log.debug("更新租户配置: 从 table={}, column={}, insertValue={}, updateConditionValue={}, selectConditionValue={} 更新为 table={}, column={}, insertValue={}, updateConditionValue={}, selectConditionValue={}", GsonUtils.toJson(oldConfig.getTableNames()), oldConfig.getColumnName(), oldConfig.getInsertColumnValue(), oldConfig.getUpdateConditionColumnValue(), oldConfig.getSelectConditionColumnValue(), GsonUtils.toJson(config.getTableNames()), config.getColumnName(), config.getInsertColumnValue(), config.getUpdateConditionColumnValue(), config.getSelectConditionColumnValue());
+            log.debug("更新租户配置: 从 oldConfig={} 更新为 newConfig={}", GsonUtils.toJson(oldConfig), GsonUtils.toJson(config));
         }
 
         /**
@@ -92,7 +94,7 @@ public class TenantUtils {
         public static void remove() {
             TenantConfig config = HOLDER.get();
             if (Objects.nonNull(config)) {
-                log.debug("移除租户配置: table={}, column={}, insertValue={}, updateConditionValue={}, selectConditionValue={}", GsonUtils.toJson(config.getTableNames()), config.getColumnName(), config.getInsertColumnValue(), config.getUpdateConditionColumnValue(), config.getSelectConditionColumnValue());
+                log.debug("移除租户配置: config={}", GsonUtils.toJson(config));
             }
             HOLDER.remove();
         }

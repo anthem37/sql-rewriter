@@ -20,97 +20,129 @@ import java.util.function.Supplier;
 public class TenantConfig {
 
     /**
-     * 目标表名
+     * 租户配置项列表
      *
-     * <p>指定要添加租户过滤条件的数据库表名。
-     * 例如：user_info、order_detail、product_list 等。
+     * <p>包含多个 {@link ConfigItem} 实例，每个实例定义了一个数据库表的租户过滤条件。
      */
-    private final List<String> tableNames;
+    private final List<ConfigItem> configItems;
 
-    /**
-     * 字段名
-     *
-     * <p>指定要添加租户过滤条件的数据库字段名。
-     * 通常为租户标识字段，如 tenant_id、tenant_code、org_id 等。
-     */
-    private final String columnName;
+    @Data
+    @AllArgsConstructor
+    public static class ConfigItem {
+        /**
+         * 目标表名
+         *
+         * <p>指定要添加租户过滤条件的数据库表名。
+         * 例如：user_info、order_detail、product_list 等。
+         */
+        private final List<String> tableNames;
 
-    /**
-     * 插入时字段值提供函数
-     *
-     * <p>用于动态提供插入语句中租户字段的实际值。
-     * 例如，从当前登录用户上下文获取当前租户 ID。
-     */
-    private final Supplier<?> insertColumnValueSupplier;
+        /**
+         * 字段名
+         *
+         * <p>指定要添加租户过滤条件的数据库字段名。
+         * 通常为租户标识字段，如 tenant_id、tenant_code、org_id 等。
+         */
+        private final String columnName;
 
-    /**
-     * 更新时WHERE条件字段值提供函数
-     *
-     * <p>用于动态提供更新语句中租户过滤条件的实际值。
-     * 例如，从当前登录用户上下文获取当前租户 ID。
-     */
-    private final Supplier<?> updateConditionColumnValueSupplier;
+        /**
+         * 插入时字段值提供函数
+         *
+         * <p>用于动态提供插入语句中租户字段的实际值。
+         * 例如，从当前登录用户上下文获取当前租户 ID。
+         */
+        private final Supplier<?> insertColumnValueSupplier;
 
-    /**
-     * 查询时WHERE条件字段值提供函数
-     *
-     * <p>用于动态提供查询语句中租户过滤条件的实际值。
-     * 例如，从当前登录用户上下文获取当前租户 ID。
-     */
-    private final Supplier<?> selectConditionColumnValueSupplier;
+        /**
+         * 删除时WHERE条件字段值提供函数
+         *
+         * <p>用于动态提供删除语句中租户过滤条件的实际值。
+         * 例如，从当前登录用户上下文获取当前租户 ID。
+         */
+        private final Supplier<?> deleteConditionColumnValueSupplier;
 
-    /**
-     * 规则优先级
-     *
-     * <p>当存在多个租户配置时，用于确定执行顺序。
-     * 数值越小优先级越高，优先级高的配置会先执行。
-     *
-     * <p>常用优先级：
-     * <ul>
-     *   <li>1：最高优先级，通常用于核心业务表</li>
-     *   <li>5：中等优先级，通常用于一般业务表</li>
-     *   <li>10：最低优先级，通常用于辅助表</li>
-     * </ul>
-     */
-    private final int priority;
+        /**
+         * 更新时WHERE条件字段值提供函数
+         *
+         * <p>用于动态提供更新语句中租户过滤条件的实际值。
+         * 例如，从当前登录用户上下文获取当前租户 ID。
+         */
+        private final Supplier<?> updateConditionColumnValueSupplier;
 
-    /**
-     * 获取插入时字段值
-     *
-     * <p>通过调用字段值提供函数获取实际的租户字段值。
-     * 如果提供函数为 {@code null}，则返回 {@code null}。
-     *
-     * @return 租户字段值，或 {@code null} 如果提供函数为 {@code null}
-     */
-    public Object getInsertColumnValue() {
+        /**
+         * 查询时WHERE条件字段值提供函数
+         *
+         * <p>用于动态提供查询语句中租户过滤条件的实际值。
+         * 例如，从当前登录用户上下文获取当前租户 ID。
+         */
+        private final Supplier<?> selectConditionColumnValueSupplier;
 
-        return ObjectUtil.isNull(insertColumnValueSupplier) ? null : insertColumnValueSupplier.get();
-    }
+        /**
+         * 规则优先级
+         *
+         * <p>当存在多个租户配置时，用于确定执行顺序。
+         * 数值越小优先级越高，优先级高的配置会先执行。
+         *
+         * <p>常用优先级：
+         * <ul>
+         *   <li>1：最高优先级，通常用于核心业务表</li>
+         *   <li>5：中等优先级，通常用于一般业务表</li>
+         *   <li>10：最低优先级，通常用于辅助表</li>
+         * </ul>
+         */
+        private final int priority;
 
-    /**
-     * 获取更新时WHERE条件字段值
-     *
-     * <p>通过调用字段值提供函数获取实际的租户过滤条件值。
-     * 如果提供函数为 {@code null}，则返回 {@code null}。
-     *
-     * @return 租户过滤条件值，或 {@code null} 如果提供函数为 {@code null}
-     */
-    public Object getUpdateConditionColumnValue() {
+        /**
+         * 获取插入时字段值
+         *
+         * <p>通过调用字段值提供函数获取实际的租户字段值。
+         * 如果提供函数为 {@code null}，则返回 {@code null}。
+         *
+         * @return 租户字段值，或 {@code null} 如果提供函数为 {@code null}
+         */
+        public Object getInsertColumnValue() {
 
-        return ObjectUtil.isNull(updateConditionColumnValueSupplier) ? null : updateConditionColumnValueSupplier.get();
-    }
+            return ObjectUtil.isNull(insertColumnValueSupplier) ? null : insertColumnValueSupplier.get();
+        }
 
-    /**
-     * 获取查询时WHERE条件字段值
-     *
-     * <p>通过调用字段值提供函数获取实际的租户过滤条件值。
-     * 如果提供函数为 {@code null}，则返回 {@code null}。
-     *
-     * @return 租户过滤条件值，或 {@code null} 如果提供函数为 {@code null}
-     */
-    public Object getSelectConditionColumnValue() {
+        /**
+         * 获取删除时WHERE条件字段值
+         *
+         * <p>通过调用字段值提供函数获取实际的租户过滤条件值。
+         * 如果提供函数为 {@code null}，则返回 {@code null}。
+         *
+         * @return 租户过滤条件值，或 {@code null} 如果提供函数为 {@code null}
+         */
+        public Object getDeleteConditionColumnValue() {
 
-        return ObjectUtil.isNull(selectConditionColumnValueSupplier) ? null : selectConditionColumnValueSupplier.get();
+            return ObjectUtil.isNull(deleteConditionColumnValueSupplier) ? null : deleteConditionColumnValueSupplier.get();
+        }
+
+        /**
+         * 获取更新时WHERE条件字段值
+         *
+         * <p>通过调用字段值提供函数获取实际的租户过滤条件值。
+         * 如果提供函数为 {@code null}，则返回 {@code null}。
+         *
+         * @return 租户过滤条件值，或 {@code null} 如果提供函数为 {@code null}
+         */
+        public Object getUpdateConditionColumnValue() {
+
+            return ObjectUtil.isNull(updateConditionColumnValueSupplier) ? null : updateConditionColumnValueSupplier.get();
+        }
+
+        /**
+         * 获取查询时WHERE条件字段值
+         *
+         * <p>通过调用字段值提供函数获取实际的租户过滤条件值。
+         * 如果提供函数为 {@code null}，则返回 {@code null}。
+         *
+         * @return 租户过滤条件值，或 {@code null} 如果提供函数为 {@code null}
+         */
+        public Object getSelectConditionColumnValue() {
+
+            return ObjectUtil.isNull(selectConditionColumnValueSupplier) ? null : selectConditionColumnValueSupplier.get();
+        }
     }
 
 }
