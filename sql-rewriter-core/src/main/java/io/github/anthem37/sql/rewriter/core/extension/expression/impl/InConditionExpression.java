@@ -10,7 +10,7 @@ import net.sf.jsqlparser.expression.operators.relational.InExpression;
 import net.sf.jsqlparser.schema.Column;
 import net.sf.jsqlparser.schema.Table;
 
-import java.util.List;
+import java.util.Collection;
 import java.util.stream.Collectors;
 
 /**
@@ -41,7 +41,7 @@ public class InConditionExpression extends InExpression implements IConditionExp
      * 值（支持任意类型，最终会转为SQL表达式）
      */
     @Getter
-    private final List<?> columnValue;
+    private final Collection<?> columnValue;
 
     /**
      * 构造IN条件表达式
@@ -50,7 +50,7 @@ public class InConditionExpression extends InExpression implements IConditionExp
      * @param columnName  字段名
      * @param columnValue 值列表
      */
-    public <T> InConditionExpression(String tableName, String columnName, List<T> columnValue) {
+    public <T> InConditionExpression(String tableName, String columnName, Collection<T> columnValue) {
         super();
         setLeftExpression(new Column(new Table(tableName), columnName));
         ExpressionList<Expression> expressions = new ExpressionList<>(columnValue.stream().map(JsqlParserUtils::createValueExpression).collect(Collectors.toList()));

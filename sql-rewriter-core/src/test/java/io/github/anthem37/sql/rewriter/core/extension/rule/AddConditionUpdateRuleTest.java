@@ -131,9 +131,9 @@ public class AddConditionUpdateRuleTest {
 
     @Test
     public void testUpdateWithInCondition() throws Exception {
-        AddConditionUpdateRule rule = new AddConditionUpdateRule("orders", 
-            new InConditionExpression("orders", "status", Arrays.asList("active", "pending")));
-        
+        AddConditionUpdateRule rule = new AddConditionUpdateRule("orders",
+                new InConditionExpression("orders", "status", Arrays.asList("active", "pending")));
+
         Statement statement = CCJSqlParserUtil.parse("UPDATE orders SET amount = 100 WHERE id = 1");
         Update update = (Update) statement;
         rule.applyTyped(update);
@@ -146,9 +146,9 @@ public class AddConditionUpdateRuleTest {
 
     @Test
     public void testUpdateWithIsNullCondition() throws Exception {
-        AddConditionUpdateRule rule = new AddConditionUpdateRule("users", 
-            new IsNullConditionExpression("users", "deleted_at"));
-        
+        AddConditionUpdateRule rule = new AddConditionUpdateRule("users",
+                new IsNullConditionExpression("users", "deleted_at"));
+
         Statement statement = CCJSqlParserUtil.parse("UPDATE users SET name = 'test' WHERE id = 1");
         Update update = (Update) statement;
         rule.applyTyped(update);
@@ -166,7 +166,7 @@ public class AddConditionUpdateRuleTest {
         Statement statement = CCJSqlParserUtil.parse("UPDATE users SET name = 'test' WHERE id = 1");
         Update update = (Update) statement;
         String originalWhere = update.getWhere().toString();
-        
+
         createTenantRule().applyTyped(update);
 
         assertEquals(originalWhere, update.getWhere().toString());
@@ -201,7 +201,7 @@ public class AddConditionUpdateRuleTest {
     @Test
     public void testUpdateWithJoinInWhere() throws Exception {
         Statement statement = CCJSqlParserUtil.parse(
-            "UPDATE tenant t SET t.name = 'test' WHERE t.id IN (SELECT o.tenant_id FROM orders o WHERE o.amount > 100)");
+                "UPDATE tenant t SET t.name = 'test' WHERE t.id IN (SELECT o.tenant_id FROM orders o WHERE o.amount > 100)");
         Update update = (Update) statement;
         createTenantRule().applyTyped(update);
 
@@ -214,7 +214,7 @@ public class AddConditionUpdateRuleTest {
     @Test
     public void testUpdateWithExistsSubquery() throws Exception {
         Statement statement = CCJSqlParserUtil.parse(
-            "UPDATE tenant SET name = 'test' WHERE EXISTS (SELECT 1 FROM orders o WHERE o.tenant_id = tenant.id)");
+                "UPDATE tenant SET name = 'test' WHERE EXISTS (SELECT 1 FROM orders o WHERE o.tenant_id = tenant.id)");
         Update update = (Update) statement;
         createTenantRule().applyTyped(update);
 
@@ -362,16 +362,16 @@ public class AddConditionUpdateRuleTest {
     public void testMultipleRuleApplications() throws Exception {
         Statement statement = CCJSqlParserUtil.parse("UPDATE tenant SET name = 'test' WHERE id = 1");
         Update update = (Update) statement;
-        
+
         // 应用规则
         AddConditionUpdateRule rule = createTenantRule();
         rule.applyTyped(update);
         String result = update.getWhere().toString();
-        
+
         // 验证条件已正确添加
         assertTrue(result.contains("(id = 1)"));
         assertTrue(result.contains("tenant.tenant_id = 'TENANT_1'"));
-        
+
         // 验证AND结构
         assertTrue(result instanceof String);
         assertTrue(result.contains("AND"));
@@ -381,19 +381,19 @@ public class AddConditionUpdateRuleTest {
     public void testDifferentRulesOnSameUpdate() throws Exception {
         Statement statement = CCJSqlParserUtil.parse("UPDATE tenant SET name = 'test' WHERE id = 1");
         Update update = (Update) statement;
-        
+
         // 先应用一个规则
         createTenantRule().applyTyped(update);
         String firstResult = update.getWhere().toString();
-        
+
         // 重置并应用不同的规则
         statement = CCJSqlParserUtil.parse("UPDATE tenant SET name = 'test' WHERE id = 1");
         update = (Update) statement;
-        
-        AddConditionUpdateRule differentRule = new AddConditionUpdateRule("tenant", 
-            new EqualToConditionExpression("tenant", "status", "active"));
+
+        AddConditionUpdateRule differentRule = new AddConditionUpdateRule("tenant",
+                new EqualToConditionExpression("tenant", "status", "active"));
         differentRule.applyTyped(update);
-        
+
         assertNotEquals(firstResult, update.getWhere().toString());
         String secondResult = update.getWhere().toString();
         assertTrue(secondResult.contains("tenant.status = 'active'"));

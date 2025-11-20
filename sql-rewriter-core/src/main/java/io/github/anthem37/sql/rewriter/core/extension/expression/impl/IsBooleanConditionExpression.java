@@ -47,6 +47,23 @@ public class IsBooleanConditionExpression extends IsBooleanExpression implements
      * @param columnName 字段名
      * @param isTrue     是否为TRUE
      */
+    public IsBooleanConditionExpression(String tableName, String columnName, boolean isTrue) {
+        super();
+        setLeftExpression(new Column(new Table(tableName), columnName));
+        setIsTrue(isTrue);
+        this.tableName = tableName;
+        this.columnName = columnName;
+        this.not = false;
+        this.isTrue = isTrue;
+    }
+
+    /**
+     * 构造IS TRUE或IS FALSE条件表达式
+     *
+     * @param tableName  表名
+     * @param columnName 字段名
+     * @param isTrue     是否为TRUE
+     */
     public IsBooleanConditionExpression(String tableName, String columnName, boolean not, boolean isTrue) {
         super();
         setLeftExpression(new Column(new Table(tableName), columnName));
