@@ -24,7 +24,7 @@ public class TenantEngine extends SQLRewriteEngine {
     private final List<TenantConfig> tenantConfigs;
 
     public TenantEngine(List<TenantConfig> tenantConfigs) {
-        super(tenantConfigs == null ? Collections.emptyList() : tenantConfigs.stream().flatMap(tenantConfig -> TenantUtils.convert2TenantRules(tenantConfig).stream()).collect(Collectors.toList()));
+        super(tenantConfigs == null ? Collections.emptyList() : tenantConfigs.stream().map(TenantUtils::convert2TenantRule).collect(Collectors.toList()));
         this.tenantConfigs = Collections.unmodifiableList(tenantConfigs == null ? Collections.emptyList() : tenantConfigs);
     }
 

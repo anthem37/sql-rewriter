@@ -1,6 +1,7 @@
 package io.github.anthem37.sql.rewriter.plugin.tenant.config;
 
 import cn.hutool.core.util.ObjectUtil;
+import io.github.anthem37.sql.rewriter.core.constant.SQLTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 
@@ -29,6 +30,15 @@ public class TenantConfig {
     @Data
     @AllArgsConstructor
     public static class ConfigItem {
+
+        /**
+         * 可以被改写的SQL类型列表
+         *
+         * <p>指定要应用本配置项的SQL语句类型。
+         * 支持 INSERT、DELETE、UPDATE、SELECT 等。
+         */
+        private final List<SQLTypeEnum> rewritableSqlTypes;
+
         /**
          * 目标表名
          *

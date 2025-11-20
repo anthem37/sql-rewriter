@@ -1,10 +1,11 @@
 package io.github.anthem37.sql.rewriter.plugin.tenant.rule;
 
-import com.google.common.collect.Lists;
-import io.github.anthem37.sql.rewriter.core.extension.rule.*;
-import io.github.anthem37.sql.rewriter.core.rule.RulePriority;
-import io.github.anthem37.sql.rewriter.core.util.ConditionExpressionUtils;
+import io.github.anthem37.sql.rewriter.core.constant.SQLTypeEnum;
+import io.github.anthem37.sql.rewriter.core.extension.rule.AbstractCombineSqlRule;
+import io.github.anthem37.sql.rewriter.core.rule.ISqlRule;
 import io.github.anthem37.sql.rewriter.core.util.GsonUtils;
+import io.github.anthem37.sql.rewriter.plugin.tenant.config.TenantConfig;
+import io.github.anthem37.sql.rewriter.plugin.tenant.util.TenantUtils;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.statement.Statement;
@@ -33,78 +34,94 @@ import java.util.stream.Collectors;
 public class TenantRule extends AbstractCombineSqlRule {
 
     /**
-     * 目标表名
+     * 租户规则项列表
      */
-    private final List<String> tableNames;
+    private final List<TenantRuleItem> tenantRuleItems;
 
     /**
-     * 字段名
+     * 所有SQL规则的列表
      */
-    private final String columnName;
+    private final List<ISqlRule<?>> rules;
 
     /**
-     * 插入时字段值
+     * 构造函数
+     *
+     * @param tenantConfig 租户配置
      */
-    private final Object insertColumnValue;
-
-    /**
-     * 删除时WHERE条件字段值
-     */
-    private final Object deleteConditionColumnValue;
-
-    /**
-     * 更新时WHERE条件字段值
-     */
-    private final Object updateConditionColumnValue;
-
-    /**
-     * 查询时WHERE条件字段值
-     */
-    private final Object selectConditionColumnValue;
-
-    /**
-     * 规则优先级，数值越小优先级越高
-     */
-    private final int priority;
-
-    public TenantRule(List<String> tableNames, String columnName, Object columnValue) {
-        this(tableNames, columnName, columnValue, RulePriority.INSERT_DEFAULT);
+    public TenantRule(TenantConfig tenantConfig) {
+        this.tenantRuleItems = tenantConfig.getConfigItems().stream().map(TenantRuleItem::new).collect(Collectors.toList());
+        this.rules = tenantRuleItems.stream().flatMap(item -> item.getRules().stream()).collect(Collectors.toList());
     }
 
-    public TenantRule(List<String> tableNames, String columnName, Object columnValue, int priority) {
-        this(tableNames, columnName, columnValue, columnValue, columnValue, priority);
-    }
 
-    public TenantRule(List<String> tableNames, String columnName, Object insertColumnValue, Object deleteConditionColumnValue, Object updateConditionColumnValue, Object selectConditionColumnValue) {
-        this(tableNames, columnName, insertColumnValue, deleteConditionColumnValue, updateConditionColumnValue, selectConditionColumnValue, RulePriority.INSERT_DEFAULT);
-    }
+    @Getter
+    @Slf4j
+    public static class TenantRuleItem extends AbstractCombineSqlRule {
+        /**
+         * 可以被改写的SQL类型列表
+         */
+        private final List<SQLTypeEnum> rewritableSqlTypes;
 
-    public TenantRule(List<String> tableNames, String columnName, Object insertColumnValue, Object deleteConditionColumnValue, Object updateConditionColumnValue, Object selectConditionColumnValue, int priority) {
-        super(tableNames.stream().flatMap(tableName -> Lists.newArrayList(
-                        new AddColumnInsertRule(tableName, columnName, insertColumnValue),
-                        new AddConditionDeleteRule(tableName, ConditionExpressionUtils.createAdaptiveCondition(tableName, columnName, deleteConditionColumnValue)),
-                        new AddConditionUpdateRule(tableName, ConditionExpressionUtils.createAdaptiveCondition(tableName, columnName, updateConditionColumnValue)),
-                        new AddConditionSelectRule(tableName, ConditionExpressionUtils.createAdaptiveCondition(tableName, columnName, selectConditionColumnValue)))
-                .stream()).collect(Collectors.toList()));
-        this.tableNames = tableNames;
-        this.columnName = columnName;
-        this.insertColumnValue = insertColumnValue;
-        this.deleteConditionColumnValue = deleteConditionColumnValue;
-        this.updateConditionColumnValue = updateConditionColumnValue;
-        this.selectConditionColumnValue = selectConditionColumnValue;
-        this.priority = priority;
-        log.debug("创建租户规则: table={}, column={}, insertValue={}, deleteConditionValue={}, updateConditionValue={}, selectConditionValue={}, priority={}", GsonUtils.toJson(tableNames), columnName, insertColumnValue, deleteConditionColumnValue, updateConditionColumnValue, selectConditionColumnValue, priority);
-    }
+        /**
+         * 目标表名
+         */
+        private final List<String> tableNames;
 
-    @Override
-    public boolean match(Statement statement) {
+        /**
+         * 字段名
+         */
+        private final String columnName;
 
-        return super.match(statement);
-    }
+        /**
+         * 插入时字段值
+         */
+        private final Object insertColumnValue;
 
-    @Override
-    public void apply(Statement statement) {
-        super.apply(statement);
+        /**
+         * 删除时WHERE条件字段值
+         */
+        private final Object deleteConditionColumnValue;
+
+        /**
+         * 更新时WHERE条件字段值
+         */
+        private final Object updateConditionColumnValue;
+
+        /**
+         * 查询时WHERE条件字段值
+         */
+        private final Object selectConditionColumnValue;
+
+        private final List<ISqlRule<?>> rules;
+
+        /**
+         * 规则优先级，数值越小优先级越高
+         */
+        private final int priority;
+
+        public TenantRuleItem(TenantConfig.ConfigItem configItem) {
+            this.rewritableSqlTypes = configItem.getRewritableSqlTypes();
+            this.tableNames = configItem.getTableNames();
+            this.columnName = configItem.getColumnName();
+            this.insertColumnValue = configItem.getInsertColumnValue();
+            this.deleteConditionColumnValue = configItem.getDeleteConditionColumnValue();
+            this.updateConditionColumnValue = configItem.getUpdateConditionColumnValue();
+            this.selectConditionColumnValue = configItem.getSelectConditionColumnValue();
+            this.priority = configItem.getPriority();
+            this.rules = TenantUtils.convert2TenantItemSqlRules(configItem);
+            log.debug("创建租户规则项: table={}, column={}, insertValue={}, deleteConditionValue={}, updateConditionValue={}, selectConditionValue={}, priority={}", GsonUtils.toJson(tableNames), columnName, insertColumnValue, deleteConditionColumnValue, updateConditionColumnValue, selectConditionColumnValue, priority);
+        }
+
+        @Override
+        public boolean match(Statement statement) {
+
+            return super.match(statement);
+        }
+
+        @Override
+        public void apply(Statement statement) {
+            super.apply(statement);
+        }
     }
 
 }

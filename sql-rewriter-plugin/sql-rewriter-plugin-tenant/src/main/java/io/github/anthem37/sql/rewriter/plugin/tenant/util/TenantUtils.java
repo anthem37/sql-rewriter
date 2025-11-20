@@ -1,7 +1,14 @@
 package io.github.anthem37.sql.rewriter.plugin.tenant.util;
 
+import cn.hutool.core.collection.CollectionUtil;
+import cn.hutool.core.util.ObjectUtil;
 import com.alibaba.ttl.TransmittableThreadLocal;
 import com.google.common.collect.Lists;
+import io.github.anthem37.sql.rewriter.core.constant.SQLTypeEnum;
+import io.github.anthem37.sql.rewriter.core.extension.rule.AddColumnInsertRule;
+import io.github.anthem37.sql.rewriter.core.extension.rule.AddConditionSelectRule;
+import io.github.anthem37.sql.rewriter.core.rule.ISqlRule;
+import io.github.anthem37.sql.rewriter.core.util.ConditionExpressionUtils;
 import io.github.anthem37.sql.rewriter.core.util.GsonUtils;
 import io.github.anthem37.sql.rewriter.plugin.tenant.config.TenantConfig;
 import io.github.anthem37.sql.rewriter.plugin.tenant.rule.TenantRule;
@@ -9,7 +16,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
@@ -29,12 +35,52 @@ public class TenantUtils {
      * @param tenantConfig 租户配置对象，不能为null
      * @return 对应的租户规则对象
      */
-    public static List<TenantRule> convert2TenantRules(TenantConfig tenantConfig) {
+    public static TenantRule convert2TenantRule(TenantConfig tenantConfig) {
 
-        return Optional.ofNullable(tenantConfig.getConfigItems()).orElseGet(Lists::newArrayList)
-                .stream()
-                .map(configItem -> new TenantRule(configItem.getTableNames(), configItem.getColumnName(), configItem.getInsertColumnValue(), configItem.getUpdateConditionColumnValue(), configItem.getSelectConditionColumnValue(), configItem.getPriority()))
-                .collect(Collectors.toList());
+        return new TenantRule(tenantConfig);
+    }
+
+    /**
+     * 将租户配置项转换为SQL规则
+     *
+     * @param configItem 租户配置项对象，不能为null
+     * @return 对应的SQL规则对象列表
+     */
+    public static List<ISqlRule<?>> convert2TenantItemSqlRules(TenantConfig.ConfigItem configItem) {
+        List<ISqlRule<?>> sqlRules = Lists.newArrayList();
+        if (ObjectUtil.isNull(configItem) || CollectionUtil.isEmpty(configItem.getRewritableSqlTypes())) {
+            return sqlRules;
+        }
+        List<SQLTypeEnum> rewritableSqlTypes = configItem.getRewritableSqlTypes();
+        List<String> tableNames = configItem.getTableNames();
+        if (CollectionUtil.isEmpty(tableNames)) {
+            return sqlRules;
+        }
+        if (rewritableSqlTypes.contains(SQLTypeEnum.INSERT)) {
+            List<AddColumnInsertRule> addColumnInsertRules = tableNames.stream()
+                    .map(tableName -> new AddColumnInsertRule(tableName, configItem.getColumnName(), configItem.getInsertColumnValue()))
+                    .collect(Collectors.toList());
+            sqlRules.addAll(addColumnInsertRules);
+        }
+        if (rewritableSqlTypes.contains(SQLTypeEnum.DELETE)) {
+            List<AddConditionSelectRule> addConditionSelectRules = tableNames.stream()
+                    .map(tableName -> new AddConditionSelectRule(tableName, ConditionExpressionUtils.createAdaptiveCondition(tableName, configItem.getColumnName(), configItem.getDeleteConditionColumnValue())))
+                    .collect(Collectors.toList());
+            sqlRules.addAll(addConditionSelectRules);
+        }
+        if (rewritableSqlTypes.contains(SQLTypeEnum.UPDATE)) {
+            List<AddConditionSelectRule> addConditionSelectRules = tableNames.stream()
+                    .map(tableName -> new AddConditionSelectRule(tableName, ConditionExpressionUtils.createAdaptiveCondition(tableName, configItem.getColumnName(), configItem.getUpdateConditionColumnValue())))
+                    .collect(Collectors.toList());
+            sqlRules.addAll(addConditionSelectRules);
+        }
+        if (rewritableSqlTypes.contains(SQLTypeEnum.SELECT)) {
+            List<AddConditionSelectRule> addConditionSelectRules = tableNames.stream()
+                    .map(tableName -> new AddConditionSelectRule(tableName, ConditionExpressionUtils.createAdaptiveCondition(tableName, configItem.getColumnName(), configItem.getSelectConditionColumnValue())))
+                    .collect(Collectors.toList());
+            sqlRules.addAll(addConditionSelectRules);
+        }
+        return sqlRules;
     }
 
     /**
