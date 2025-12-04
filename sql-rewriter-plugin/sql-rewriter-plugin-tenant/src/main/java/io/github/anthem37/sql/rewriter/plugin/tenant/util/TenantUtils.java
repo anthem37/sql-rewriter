@@ -6,7 +6,9 @@ import com.alibaba.ttl.TransmittableThreadLocal;
 import com.google.common.collect.Lists;
 import io.github.anthem37.sql.rewriter.core.constant.SQLTypeEnum;
 import io.github.anthem37.sql.rewriter.core.extension.rule.AddColumnInsertRule;
+import io.github.anthem37.sql.rewriter.core.extension.rule.AddConditionDeleteRule;
 import io.github.anthem37.sql.rewriter.core.extension.rule.AddConditionSelectRule;
+import io.github.anthem37.sql.rewriter.core.extension.rule.AddConditionUpdateRule;
 import io.github.anthem37.sql.rewriter.core.rule.ISqlRule;
 import io.github.anthem37.sql.rewriter.core.util.ConditionExpressionUtils;
 import io.github.anthem37.sql.rewriter.core.util.GsonUtils;
@@ -63,16 +65,16 @@ public class TenantUtils {
             sqlRules.addAll(addColumnInsertRules);
         }
         if (rewritableSqlTypes.contains(SQLTypeEnum.DELETE)) {
-            List<AddConditionSelectRule> addConditionSelectRules = tableNames.stream()
-                    .map(tableName -> new AddConditionSelectRule(tableName, ConditionExpressionUtils.createAdaptiveCondition(tableName, configItem.getColumnName(), configItem.getDeleteConditionColumnValue())))
+            List<AddConditionDeleteRule> addConditionDeleteRules = tableNames.stream()
+                    .map(tableName -> new AddConditionDeleteRule(tableName, ConditionExpressionUtils.createAdaptiveCondition(tableName, configItem.getColumnName(), configItem.getDeleteConditionColumnValue())))
                     .collect(Collectors.toList());
-            sqlRules.addAll(addConditionSelectRules);
+            sqlRules.addAll(addConditionDeleteRules);
         }
         if (rewritableSqlTypes.contains(SQLTypeEnum.UPDATE)) {
-            List<AddConditionSelectRule> addConditionSelectRules = tableNames.stream()
-                    .map(tableName -> new AddConditionSelectRule(tableName, ConditionExpressionUtils.createAdaptiveCondition(tableName, configItem.getColumnName(), configItem.getUpdateConditionColumnValue())))
+            List<AddConditionUpdateRule> addConditionUpdateRules = tableNames.stream()
+                    .map(tableName -> new AddConditionUpdateRule(tableName, ConditionExpressionUtils.createAdaptiveCondition(tableName, configItem.getColumnName(), configItem.getUpdateConditionColumnValue())))
                     .collect(Collectors.toList());
-            sqlRules.addAll(addConditionSelectRules);
+            sqlRules.addAll(addConditionUpdateRules);
         }
         if (rewritableSqlTypes.contains(SQLTypeEnum.SELECT)) {
             List<AddConditionSelectRule> addConditionSelectRules = tableNames.stream()
