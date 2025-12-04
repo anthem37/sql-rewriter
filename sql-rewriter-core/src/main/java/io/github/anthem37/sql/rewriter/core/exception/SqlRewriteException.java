@@ -1,6 +1,7 @@
 package io.github.anthem37.sql.rewriter.core.exception;
 
 import lombok.Getter;
+import lombok.ToString;
 
 /**
  * SQL重写异常
@@ -9,6 +10,7 @@ import lombok.Getter;
  * @since 2025/11/12 13:46:43
  */
 @Getter
+@ToString(callSuper = true)
 public class SqlRewriteException extends RuntimeException {
 
     /**
