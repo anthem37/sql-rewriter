@@ -12,6 +12,7 @@
         <module>sql-rewriter-bom</module>
         <module>sql-rewriter-core</module>
         <module>sql-rewriter-plugin</module>
+        <module>sql-rewriter-starter</module>
     </modules>
 
     <properties>
