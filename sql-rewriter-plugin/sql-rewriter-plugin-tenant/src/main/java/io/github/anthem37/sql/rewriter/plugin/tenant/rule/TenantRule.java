@@ -5,12 +5,13 @@ import io.github.anthem37.sql.rewriter.core.extension.rule.AbstractCombineSqlRul
 import io.github.anthem37.sql.rewriter.core.rule.ISqlRule;
 import io.github.anthem37.sql.rewriter.core.util.GsonUtils;
 import io.github.anthem37.sql.rewriter.plugin.tenant.config.TenantConfig;
-import io.github.anthem37.sql.rewriter.plugin.tenant.util.TenantUtils;
+import io.github.anthem37.sql.rewriter.plugin.tenant.util.TenantRuleConverter;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.statement.Statement;
 
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -73,24 +74,24 @@ public class TenantRule extends AbstractCombineSqlRule {
         private final String columnName;
 
         /**
-         * 插入时字段值
+         * 插入时字段值提供函数
          */
-        private final Object insertColumnValue;
+        private final Supplier<?> insertColumnValueSupplier;
 
         /**
-         * 删除时WHERE条件字段值
+         * 删除时WHERE条件字段值提供函数
          */
-        private final Object deleteConditionColumnValue;
+        private final Supplier<?> deleteConditionColumnValueSupplier;
 
         /**
-         * 更新时WHERE条件字段值
+         * 更新时WHERE条件字段值提供函数
          */
-        private final Object updateConditionColumnValue;
+        private final Supplier<?> updateConditionColumnValueSupplier;
 
         /**
-         * 查询时WHERE条件字段值
+         * 查询时WHERE条件字段值提供函数
          */
-        private final Object selectConditionColumnValue;
+        private final Supplier<?> selectConditionColumnValueSupplier;
 
         private final List<ISqlRule<?>> rules;
 
@@ -103,13 +104,49 @@ public class TenantRule extends AbstractCombineSqlRule {
             this.rewritableSqlTypes = configItem.getRewritableSqlTypes();
             this.tableNames = configItem.getTableNames();
             this.columnName = configItem.getColumnName();
-            this.insertColumnValue = configItem.getInsertColumnValue();
-            this.deleteConditionColumnValue = configItem.getDeleteConditionColumnValue();
-            this.updateConditionColumnValue = configItem.getUpdateConditionColumnValue();
-            this.selectConditionColumnValue = configItem.getSelectConditionColumnValue();
+            this.insertColumnValueSupplier = configItem.getInsertColumnValueSupplier();
+            this.deleteConditionColumnValueSupplier = configItem.getDeleteConditionColumnValueSupplier();
+            this.updateConditionColumnValueSupplier = configItem.getUpdateConditionColumnValueSupplier();
+            this.selectConditionColumnValueSupplier = configItem.getSelectConditionColumnValueSupplier();
             this.priority = configItem.getPriority();
-            this.rules = TenantUtils.convert2TenantItemSqlRules(configItem);
-            log.debug("创建租户规则项: table={}, column={}, insertValue={}, deleteConditionValue={}, updateConditionValue={}, selectConditionValue={}, priority={}", GsonUtils.toJson(tableNames), columnName, insertColumnValue, deleteConditionColumnValue, updateConditionColumnValue, selectConditionColumnValue, priority);
+            this.rules = TenantRuleConverter.convertToSqlRules(configItem);
+            log.debug("创建租户规则项: table={}, column={}, priority={}", GsonUtils.toJson(tableNames), columnName, priority);
+        }
+
+        /**
+         * 获取插入时字段值（懒加载）
+         *
+         * @return 插入时字段值
+         */
+        public Object getInsertColumnValue() {
+            return insertColumnValueSupplier == null ? null : insertColumnValueSupplier.get();
+        }
+
+        /**
+         * 获取删除时WHERE条件字段值（懒加载）
+         *
+         * @return 删除时WHERE条件字段值
+         */
+        public Object getDeleteConditionColumnValue() {
+            return deleteConditionColumnValueSupplier == null ? null : deleteConditionColumnValueSupplier.get();
+        }
+
+        /**
+         * 获取更新时WHERE条件字段值（懒加载）
+         *
+         * @return 更新时WHERE条件字段值
+         */
+        public Object getUpdateConditionColumnValue() {
+            return updateConditionColumnValueSupplier == null ? null : updateConditionColumnValueSupplier.get();
+        }
+
+        /**
+         * 获取查询时WHERE条件字段值（懒加载）
+         *
+         * @return 查询时WHERE条件字段值
+         */
+        public Object getSelectConditionColumnValue() {
+            return selectConditionColumnValueSupplier == null ? null : selectConditionColumnValueSupplier.get();
         }
 
         @Override

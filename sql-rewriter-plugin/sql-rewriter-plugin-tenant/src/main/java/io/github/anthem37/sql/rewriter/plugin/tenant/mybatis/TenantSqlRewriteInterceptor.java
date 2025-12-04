@@ -4,7 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import com.google.common.collect.Lists;
 import io.github.anthem37.sql.rewriter.plugin.tenant.config.TenantConfig;
 import io.github.anthem37.sql.rewriter.plugin.tenant.engine.TenantEngine;
-import io.github.anthem37.sql.rewriter.plugin.tenant.util.TenantUtils;
+import io.github.anthem37.sql.rewriter.plugin.tenant.util.TenantContext;
 import org.apache.ibatis.executor.statement.StatementHandler;
 import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.plugin.*;
@@ -21,9 +21,7 @@ import java.util.function.Supplier;
  * @author anthem37
  * @since 2025/11/19 20:09:05
  */
-@Intercepts({
-        @Signature(type = StatementHandler.class, method = "prepare", args = {Connection.class, Integer.class})
-})
+@Intercepts({@Signature(type = StatementHandler.class, method = "prepare", args = {Connection.class, Integer.class})})
 public class TenantSqlRewriteInterceptor implements Interceptor {
 
     /**
@@ -33,7 +31,7 @@ public class TenantSqlRewriteInterceptor implements Interceptor {
      * 如果当前线程没有租户配置，则返回null，表示不需要进行SQL重写。
      */
     private final Supplier<TenantEngine> tenantEngineSupplier = () -> {
-        TenantConfig tenantConfig = TenantUtils.TenantConfigHolder.get();
+        TenantConfig tenantConfig = TenantContext.get();
         if (ObjectUtil.isEmpty(tenantConfig)) {
             return null;
         }
@@ -61,7 +59,18 @@ public class TenantSqlRewriteInterceptor implements Interceptor {
         StatementHandler statementHandler = (StatementHandler) invocation.getTarget();
         MetaObject metaObject = SystemMetaObject.forObject(statementHandler);
         BoundSql boundSql = statementHandler.getBoundSql();
+
+        // 检查boundSql是否为null
+        if (ObjectUtil.isEmpty(boundSql)) {
+            return invocation.proceed();
+        }
+
         String originalSql = boundSql.getSql();
+
+        // 检查SQL是否为空
+        if (ObjectUtil.isEmpty(originalSql)) {
+            return invocation.proceed();
+        }
 
         TenantEngine tenantEngine = tenantEngineSupplier.get();
         if (ObjectUtil.isEmpty(tenantEngine)) {
@@ -70,7 +79,12 @@ public class TenantSqlRewriteInterceptor implements Interceptor {
 
         // 直接全部重写，由tenantEngine决定是否处理
         String newSql = tenantEngine.run(originalSql);
-        metaObject.setValue("boundSql.sql", newSql);
+
+        // 确保重写后的SQL不为空
+        if (ObjectUtil.isNotEmpty(newSql)) {
+            metaObject.setValue("boundSql.sql", newSql);
+        }
+
         return invocation.proceed();
     }
 

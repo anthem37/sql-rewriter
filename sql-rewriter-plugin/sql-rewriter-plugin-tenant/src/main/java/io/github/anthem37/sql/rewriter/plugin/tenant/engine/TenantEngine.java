@@ -2,7 +2,7 @@ package io.github.anthem37.sql.rewriter.plugin.tenant.engine;
 
 import io.github.anthem37.sql.rewriter.core.engine.impl.SQLRewriteEngine;
 import io.github.anthem37.sql.rewriter.plugin.tenant.config.TenantConfig;
-import io.github.anthem37.sql.rewriter.plugin.tenant.util.TenantUtils;
+import io.github.anthem37.sql.rewriter.plugin.tenant.util.TenantRuleConverter;
 import lombok.Getter;
 
 import java.util.Collections;
@@ -24,7 +24,7 @@ public class TenantEngine extends SQLRewriteEngine {
     private final List<TenantConfig> tenantConfigs;
 
     public TenantEngine(List<TenantConfig> tenantConfigs) {
-        super(tenantConfigs == null ? Collections.emptyList() : tenantConfigs.stream().map(TenantUtils::convert2TenantRule).collect(Collectors.toList()));
+        super(tenantConfigs == null ? Collections.emptyList() : tenantConfigs.stream().map(TenantRuleConverter::convertToTenantRule).collect(Collectors.toList()));
         this.tenantConfigs = Collections.unmodifiableList(tenantConfigs == null ? Collections.emptyList() : tenantConfigs);
     }
 

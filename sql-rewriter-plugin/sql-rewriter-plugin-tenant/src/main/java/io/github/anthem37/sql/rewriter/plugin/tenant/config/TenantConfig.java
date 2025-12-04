@@ -111,8 +111,16 @@ public class TenantConfig {
          * @return 租户字段值，或 {@code null} 如果提供函数为 {@code null}
          */
         public Object getInsertColumnValue() {
-
-            return ObjectUtil.isNull(insertColumnValueSupplier) ? null : insertColumnValueSupplier.get();
+            if (ObjectUtil.isNull(insertColumnValueSupplier)) {
+                return null;
+            }
+            try {
+                return insertColumnValueSupplier.get();
+            } catch (Exception e) {
+                // 记录异常但不传播，避免影响整个SQL重写流程
+                System.err.println("获取插入时字段值失败: " + e.getMessage());
+                return null;
+            }
         }
 
         /**
@@ -124,8 +132,16 @@ public class TenantConfig {
          * @return 租户过滤条件值，或 {@code null} 如果提供函数为 {@code null}
          */
         public Object getDeleteConditionColumnValue() {
-
-            return ObjectUtil.isNull(deleteConditionColumnValueSupplier) ? null : deleteConditionColumnValueSupplier.get();
+            if (ObjectUtil.isNull(deleteConditionColumnValueSupplier)) {
+                return null;
+            }
+            try {
+                return deleteConditionColumnValueSupplier.get();
+            } catch (Exception e) {
+                // 记录异常但不传播，避免影响整个SQL重写流程
+                System.err.println("获取删除时WHERE条件字段值失败: " + e.getMessage());
+                return null;
+            }
         }
 
         /**
@@ -137,8 +153,16 @@ public class TenantConfig {
          * @return 租户过滤条件值，或 {@code null} 如果提供函数为 {@code null}
          */
         public Object getUpdateConditionColumnValue() {
-
-            return ObjectUtil.isNull(updateConditionColumnValueSupplier) ? null : updateConditionColumnValueSupplier.get();
+            if (ObjectUtil.isNull(updateConditionColumnValueSupplier)) {
+                return null;
+            }
+            try {
+                return updateConditionColumnValueSupplier.get();
+            } catch (Exception e) {
+                // 记录异常但不传播，避免影响整个SQL重写流程
+                System.err.println("获取更新时WHERE条件字段值失败: " + e.getMessage());
+                return null;
+            }
         }
 
         /**
@@ -150,8 +174,16 @@ public class TenantConfig {
          * @return 租户过滤条件值，或 {@code null} 如果提供函数为 {@code null}
          */
         public Object getSelectConditionColumnValue() {
-
-            return ObjectUtil.isNull(selectConditionColumnValueSupplier) ? null : selectConditionColumnValueSupplier.get();
+            if (ObjectUtil.isNull(selectConditionColumnValueSupplier)) {
+                return null;
+            }
+            try {
+                return selectConditionColumnValueSupplier.get();
+            } catch (Exception e) {
+                // 记录异常但不传播，避免影响整个SQL重写流程
+                System.err.println("获取查询时WHERE条件字段值失败: " + e.getMessage());
+                return null;
+            }
         }
     }
 
