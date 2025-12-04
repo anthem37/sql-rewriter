@@ -74,6 +74,12 @@ public interface ISqlRule<T extends Statement> extends IRule {
         return RulePriority.DEFAULT;
     }
 
+    /**
+     * 判断是否匹配该规则（仅根据SQL类型）
+     *
+     * @param statement sql
+     * @return 是/否
+     */
     @Override
     default boolean match(Statement statement) {
 
