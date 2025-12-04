@@ -36,12 +36,12 @@ public class TenantUtilsTest {
     @After
     public void tearDown() {
         // 清理ThreadLocal
-        TenantUtils.TenantConfigHolder.remove();
+        TenantContext.remove();
     }
 
     @Test
     public void testConvert2TenantRule() {
-        TenantRule tenantRule = TenantUtils.convert2TenantRule(tenantConfig);
+        TenantRule tenantRule = TenantRuleConverter.convertToTenantRule(tenantConfig);
 
         assertNotNull(tenantRule);
         assertNotNull(tenantRule.getTenantRuleItems());
@@ -61,7 +61,7 @@ public class TenantUtilsTest {
     @Test
     public void testConvert2TenantRuleWithNull() {
         try {
-            TenantRule tenantRule = TenantUtils.convert2TenantRule(null);
+            TenantRule tenantRule = TenantRuleConverter.convertToTenantRule(null);
             fail("应该抛出 NullPointerException");
         } catch (NullPointerException e) {
             // 预期异常
@@ -70,7 +70,7 @@ public class TenantUtilsTest {
 
     @Test
     public void testConvert2TenantItemSqlRules() {
-        List<ISqlRule<?>> rules = TenantUtils.convert2TenantItemSqlRules(configItem);
+        List<ISqlRule<?>> rules = TenantRuleConverter.convertToSqlRules(configItem);
 
         assertNotNull(rules);
         assertFalse(rules.isEmpty());
@@ -83,7 +83,7 @@ public class TenantUtilsTest {
 
     @Test
     public void testConvert2TenantItemSqlRulesWithNull() {
-        List<ISqlRule<?>> rules = TenantUtils.convert2TenantItemSqlRules(null);
+        List<ISqlRule<?>> rules = TenantRuleConverter.convertToSqlRules(null);
 
         assertNotNull(rules);
         assertTrue(rules.isEmpty());
@@ -93,7 +93,7 @@ public class TenantUtilsTest {
     public void testConvert2TenantItemSqlRulesWithEmptySqlTypes() {
         TenantConfig.ConfigItem emptySqlTypesConfigItem = new TenantConfig.ConfigItem(Collections.emptyList(), Arrays.asList("user", "order"), "tenant_id", () -> "tenant-001", () -> "tenant-001", () -> "tenant-001", () -> "tenant-001", 10);
 
-        List<ISqlRule<?>> rules = TenantUtils.convert2TenantItemSqlRules(emptySqlTypesConfigItem);
+        List<ISqlRule<?>> rules = TenantRuleConverter.convertToSqlRules(emptySqlTypesConfigItem);
 
         assertNotNull(rules);
         assertTrue(rules.isEmpty());
@@ -103,7 +103,7 @@ public class TenantUtilsTest {
     public void testConvert2TenantItemSqlRulesWithEmptyTableNames() {
         TenantConfig.ConfigItem emptyTableNamesConfigItem = new TenantConfig.ConfigItem(Arrays.asList(SQLTypeEnum.SELECT, SQLTypeEnum.INSERT, SQLTypeEnum.UPDATE, SQLTypeEnum.DELETE), Collections.emptyList(), "tenant_id", () -> "tenant-001", () -> "tenant-001", () -> "tenant-001", () -> "tenant-001", 10);
 
-        List<ISqlRule<?>> rules = TenantUtils.convert2TenantItemSqlRules(emptyTableNamesConfigItem);
+        List<ISqlRule<?>> rules = TenantRuleConverter.convertToSqlRules(emptyTableNamesConfigItem);
 
         assertNotNull(rules);
         assertTrue(rules.isEmpty());
@@ -113,7 +113,7 @@ public class TenantUtilsTest {
     public void testConvert2TenantItemSqlRulesWithSelectOnly() {
         TenantConfig.ConfigItem selectOnlyConfigItem = new TenantConfig.ConfigItem(Collections.singletonList(SQLTypeEnum.SELECT), Arrays.asList("user", "order"), "tenant_id", () -> "tenant-001", () -> "tenant-001", () -> "tenant-001", () -> "tenant-001", 10);
 
-        List<ISqlRule<?>> rules = TenantUtils.convert2TenantItemSqlRules(selectOnlyConfigItem);
+        List<ISqlRule<?>> rules = TenantRuleConverter.convertToSqlRules(selectOnlyConfigItem);
 
         assertNotNull(rules);
         assertFalse(rules.isEmpty());
@@ -127,7 +127,7 @@ public class TenantUtilsTest {
     public void testConvert2TenantItemSqlRulesWithInsertOnly() {
         TenantConfig.ConfigItem insertOnlyConfigItem = new TenantConfig.ConfigItem(Collections.singletonList(SQLTypeEnum.INSERT), Arrays.asList("user", "order"), "tenant_id", () -> "tenant-001", () -> "tenant-001", () -> "tenant-001", () -> "tenant-001", 10);
 
-        List<ISqlRule<?>> rules = TenantUtils.convert2TenantItemSqlRules(insertOnlyConfigItem);
+        List<ISqlRule<?>> rules = TenantRuleConverter.convertToSqlRules(insertOnlyConfigItem);
 
         assertNotNull(rules);
         assertFalse(rules.isEmpty());
@@ -141,7 +141,7 @@ public class TenantUtilsTest {
     public void testConvert2TenantItemSqlRulesWithUpdateOnly() {
         TenantConfig.ConfigItem updateOnlyConfigItem = new TenantConfig.ConfigItem(Collections.singletonList(SQLTypeEnum.UPDATE), Arrays.asList("user", "order"), "tenant_id", () -> "tenant-001", () -> "tenant-001", () -> "tenant-001", () -> "tenant-001", 10);
 
-        List<ISqlRule<?>> rules = TenantUtils.convert2TenantItemSqlRules(updateOnlyConfigItem);
+        List<ISqlRule<?>> rules = TenantRuleConverter.convertToSqlRules(updateOnlyConfigItem);
 
         assertNotNull(rules);
         assertFalse(rules.isEmpty());
@@ -155,7 +155,7 @@ public class TenantUtilsTest {
     public void testConvert2TenantItemSqlRulesWithDeleteOnly() {
         TenantConfig.ConfigItem deleteOnlyConfigItem = new TenantConfig.ConfigItem(Collections.singletonList(SQLTypeEnum.DELETE), Arrays.asList("user", "order"), "tenant_id", () -> "tenant-001", () -> "tenant-001", () -> "tenant-001", () -> "tenant-001", 10);
 
-        List<ISqlRule<?>> rules = TenantUtils.convert2TenantItemSqlRules(deleteOnlyConfigItem);
+        List<ISqlRule<?>> rules = TenantRuleConverter.convertToSqlRules(deleteOnlyConfigItem);
 
         assertNotNull(rules);
         assertFalse(rules.isEmpty());
@@ -168,45 +168,45 @@ public class TenantUtilsTest {
     @Test
     public void testTenantConfigHolderSetAndGet() {
         // 初始状态应该为null
-        assertNull(TenantUtils.TenantConfigHolder.get());
+        assertNull(TenantContext.get());
 
         // 设置配置
-        TenantUtils.TenantConfigHolder.set(tenantConfig);
+        TenantContext.set(tenantConfig);
 
         // 应该能获取到设置的配置
-        assertEquals(tenantConfig, TenantUtils.TenantConfigHolder.get());
+        assertEquals(tenantConfig, TenantContext.get());
     }
 
     @Test
     public void testTenantConfigHolderRemove() {
         // 设置配置
-        TenantUtils.TenantConfigHolder.set(tenantConfig);
-        assertEquals(tenantConfig, TenantUtils.TenantConfigHolder.get());
+        TenantContext.set(tenantConfig);
+        assertEquals(tenantConfig, TenantContext.get());
 
         // 移除配置
-        TenantUtils.TenantConfigHolder.remove();
+        TenantContext.remove();
 
         // 应该为null
-        assertNull(TenantUtils.TenantConfigHolder.get());
+        assertNull(TenantContext.get());
     }
 
     @Test
     public void testTenantConfigHolderRemoveWhenNull() {
         // 初始状态为null
-        assertNull(TenantUtils.TenantConfigHolder.get());
+        assertNull(TenantContext.get());
 
         // 移除null配置不应该抛出异常
-        TenantUtils.TenantConfigHolder.remove();
+        TenantContext.remove();
 
         // 仍然应该为null
-        assertNull(TenantUtils.TenantConfigHolder.get());
+        assertNull(TenantContext.get());
     }
 
     @Test
     public void testTenantConfigHolderSetMultipleTimes() {
         // 设置第一个配置
-        TenantUtils.TenantConfigHolder.set(tenantConfig);
-        assertEquals(tenantConfig, TenantUtils.TenantConfigHolder.get());
+        TenantContext.set(tenantConfig);
+        assertEquals(tenantConfig, TenantContext.get());
 
         // 创建第二个配置
         TenantConfig.ConfigItem secondConfigItem = new TenantConfig.ConfigItem(Collections.singletonList(SQLTypeEnum.SELECT), Collections.singletonList("product"), "org_id", () -> "org-001", () -> "org-001", () -> "org-001", () -> "org-001", 20);
@@ -214,11 +214,11 @@ public class TenantUtilsTest {
         TenantConfig secondTenantConfig = new TenantConfig(Collections.singletonList(secondConfigItem));
 
         // 设置第二个配置
-        TenantUtils.TenantConfigHolder.set(secondTenantConfig);
+        TenantContext.set(secondTenantConfig);
 
         // 应该获取到第二个配置
-        assertEquals(secondTenantConfig, TenantUtils.TenantConfigHolder.get());
-        assertNotEquals(tenantConfig, TenantUtils.TenantConfigHolder.get());
+        assertEquals(secondTenantConfig, TenantContext.get());
+        assertNotEquals(tenantConfig, TenantContext.get());
     }
 
     @Test
@@ -229,7 +229,7 @@ public class TenantUtilsTest {
                 null,  // selectConditionColumnValueSupplier
                 10);
 
-        List<ISqlRule<?>> rules = TenantUtils.convert2TenantItemSqlRules(configItemWithNullValues);
+        List<ISqlRule<?>> rules = TenantRuleConverter.convertToSqlRules(configItemWithNullValues);
 
         assertNotNull(rules);
         assertFalse(rules.isEmpty());
@@ -247,7 +247,7 @@ public class TenantUtilsTest {
                 () -> 456.789,  // Double
                 10);
 
-        List<ISqlRule<?>> rules = TenantUtils.convert2TenantItemSqlRules(configItemWithDifferentValues);
+        List<ISqlRule<?>> rules = TenantRuleConverter.convertToSqlRules(configItemWithDifferentValues);
 
         assertNotNull(rules);
         assertFalse(rules.isEmpty());
@@ -261,7 +261,7 @@ public class TenantUtilsTest {
     public void testConvert2TenantItemSqlRulesWithSingleTable() {
         TenantConfig.ConfigItem singleTableConfigItem = new TenantConfig.ConfigItem(Arrays.asList(SQLTypeEnum.SELECT, SQLTypeEnum.INSERT), Collections.singletonList("single_table"), "tenant_id", () -> "tenant-001", () -> "tenant-001", () -> "tenant-001", () -> "tenant-001", 10);
 
-        List<ISqlRule<?>> rules = TenantUtils.convert2TenantItemSqlRules(singleTableConfigItem);
+        List<ISqlRule<?>> rules = TenantRuleConverter.convertToSqlRules(singleTableConfigItem);
 
         assertNotNull(rules);
         assertFalse(rules.isEmpty());

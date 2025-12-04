@@ -2,7 +2,7 @@ package io.github.anthem37.sql.rewriter.plugin.tenant.mybatis;
 
 import io.github.anthem37.sql.rewriter.core.constant.SQLTypeEnum;
 import io.github.anthem37.sql.rewriter.plugin.tenant.config.TenantConfig;
-import io.github.anthem37.sql.rewriter.plugin.tenant.util.TenantUtils;
+import io.github.anthem37.sql.rewriter.plugin.tenant.util.TenantContext;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +32,7 @@ public class TenantSqlRewriteInterceptorTest {
     @After
     public void tearDown() {
         // 清理ThreadLocal
-        TenantUtils.TenantConfigHolder.remove();
+        TenantContext.remove();
     }
 
     @Test
@@ -80,7 +80,7 @@ public class TenantSqlRewriteInterceptorTest {
         assertNotNull(tenantEngineSupplier);
 
         // 测试没有租户配置的情况
-        TenantUtils.TenantConfigHolder.remove();
+        TenantContext.remove();
 
         Object engine = tenantEngineSupplier.get();
         assertNull(engine);
@@ -89,7 +89,7 @@ public class TenantSqlRewriteInterceptorTest {
         TenantConfig.ConfigItem configItem = new TenantConfig.ConfigItem(Arrays.asList(SQLTypeEnum.SELECT), Arrays.asList("user"), "tenant_id", () -> "tenant-001", () -> "tenant-001", () -> "tenant-001", () -> "tenant-001", 10);
 
         TenantConfig tenantConfig = new TenantConfig(Collections.singletonList(configItem));
-        TenantUtils.TenantConfigHolder.set(tenantConfig);
+        TenantContext.set(tenantConfig);
 
         engine = tenantEngineSupplier.get();
         assertNotNull(engine);
@@ -98,7 +98,7 @@ public class TenantSqlRewriteInterceptorTest {
     @Test
     public void testTenantConfigHolderSetAndGet() {
         // 初始状态应该为null
-        assertNull(TenantUtils.TenantConfigHolder.get());
+        assertNull(TenantContext.get());
 
         // 创建租户配置
         TenantConfig.ConfigItem configItem = new TenantConfig.ConfigItem(Arrays.asList(SQLTypeEnum.SELECT), Arrays.asList("user"), "tenant_id", () -> "tenant-001", () -> "tenant-001", () -> "tenant-001", () -> "tenant-001", 10);
@@ -106,10 +106,10 @@ public class TenantSqlRewriteInterceptorTest {
         TenantConfig tenantConfig = new TenantConfig(Collections.singletonList(configItem));
 
         // 设置配置
-        TenantUtils.TenantConfigHolder.set(tenantConfig);
+        TenantContext.set(tenantConfig);
 
         // 应该能获取到设置的配置
-        assertEquals(tenantConfig, TenantUtils.TenantConfigHolder.get());
+        assertEquals(tenantConfig, TenantContext.get());
     }
 
     @Test
@@ -120,14 +120,14 @@ public class TenantSqlRewriteInterceptorTest {
         TenantConfig tenantConfig = new TenantConfig(Collections.singletonList(configItem));
 
         // 设置配置
-        TenantUtils.TenantConfigHolder.set(tenantConfig);
-        assertEquals(tenantConfig, TenantUtils.TenantConfigHolder.get());
+        TenantContext.set(tenantConfig);
+        assertEquals(tenantConfig, TenantContext.get());
 
         // 移除配置
-        TenantUtils.TenantConfigHolder.remove();
+        TenantContext.remove();
 
         // 应该为null
-        assertNull(TenantUtils.TenantConfigHolder.get());
+        assertNull(TenantContext.get());
     }
 
     @Test
@@ -156,8 +156,8 @@ public class TenantSqlRewriteInterceptorTest {
         TenantConfig tenantConfig1 = new TenantConfig(Collections.singletonList(configItem1));
 
         // 设置第一个租户配置
-        TenantUtils.TenantConfigHolder.set(tenantConfig1);
-        assertEquals(tenantConfig1, TenantUtils.TenantConfigHolder.get());
+        TenantContext.set(tenantConfig1);
+        assertEquals(tenantConfig1, TenantContext.get());
 
         // 创建第二个租户配置
         TenantConfig.ConfigItem configItem2 = new TenantConfig.ConfigItem(Arrays.asList(SQLTypeEnum.INSERT), Arrays.asList("order"), "org_id", () -> "org-001", () -> "org-001", () -> "org-001", () -> "org-001", 20);
@@ -165,9 +165,9 @@ public class TenantSqlRewriteInterceptorTest {
         TenantConfig tenantConfig2 = new TenantConfig(Collections.singletonList(configItem2));
 
         // 设置第二个租户配置
-        TenantUtils.TenantConfigHolder.set(tenantConfig2);
-        assertEquals(tenantConfig2, TenantUtils.TenantConfigHolder.get());
-        assertNotEquals(tenantConfig1, TenantUtils.TenantConfigHolder.get());
+        TenantContext.set(tenantConfig2);
+        assertEquals(tenantConfig2, TenantContext.get());
+        assertNotEquals(tenantConfig1, TenantContext.get());
     }
 
     @Test
@@ -182,8 +182,8 @@ public class TenantSqlRewriteInterceptorTest {
         TenantConfig configWithNulls = new TenantConfig(Collections.singletonList(configItemWithNulls));
 
         // 设置配置
-        TenantUtils.TenantConfigHolder.set(configWithNulls);
-        assertEquals(configWithNulls, TenantUtils.TenantConfigHolder.get());
+        TenantContext.set(configWithNulls);
+        assertEquals(configWithNulls, TenantContext.get());
 
         // 使用反射测试租户引擎供应商
         try {
