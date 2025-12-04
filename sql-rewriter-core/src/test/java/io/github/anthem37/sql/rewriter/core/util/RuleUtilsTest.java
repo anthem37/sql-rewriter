@@ -1,9 +1,8 @@
 package io.github.anthem37.sql.rewriter.core.util;
 
-import io.github.anthem37.sql.rewriter.core.extension.rule.AddColumnInsertRule;
 import io.github.anthem37.sql.rewriter.core.extension.expression.impl.EqualToConditionExpression;
+import io.github.anthem37.sql.rewriter.core.extension.rule.AddColumnInsertRule;
 import io.github.anthem37.sql.rewriter.core.extension.rule.AddConditionSelectRule;
-import io.github.anthem37.sql.rewriter.core.extension.rule.AddConditionUpdateRule;
 import io.github.anthem37.sql.rewriter.core.rule.IRule;
 import io.github.anthem37.sql.rewriter.core.rule.ISqlRule;
 import io.github.anthem37.sql.rewriter.core.rule.RulePriority;
@@ -44,7 +43,7 @@ public class RuleUtilsTest {
         TestIRule rule = new TestIRule(5);
         List<IRule> input = Collections.singletonList(rule);
         List<IRule> result = RuleUtils.sortByPriority(input);
-        
+
         assertEquals(1, result.size());
         assertEquals(rule, result.get(0));
     }
@@ -56,7 +55,7 @@ public class RuleUtilsTest {
         TestIRule rule3 = new TestIRule(15);
         List<IRule> input = Arrays.asList(rule1, rule2, rule3);
         List<IRule> result = RuleUtils.sortByPriority(input);
-        
+
         assertEquals(3, result.size());
         assertEquals(rule2, result.get(0)); // Priority 5
         assertEquals(rule1, result.get(1)); // Priority 10
@@ -70,7 +69,7 @@ public class RuleUtilsTest {
         TestIRule rule3 = new TestIRule(10);
         List<IRule> input = Arrays.asList(rule3, rule1, rule2);
         List<IRule> result = RuleUtils.sortByPriority(input);
-        
+
         assertEquals(3, result.size());
         assertEquals(10, result.get(0).getPriority());
         assertEquals(10, result.get(1).getPriority());
@@ -83,15 +82,15 @@ public class RuleUtilsTest {
         TestIRule rule2 = new TestIRule(5);
         List<IRule> input = new ArrayList<>(Arrays.asList(rule1, rule2));
         List<IRule> original = new ArrayList<>(input);
-        
+
         List<IRule> result = RuleUtils.sortByPriority(input);
-        
+
         // 原列表不变
         assertEquals(original.size(), input.size());
         for (int i = 0; i < original.size(); i++) {
             assertEquals(original.get(i), input.get(i));
         }
-        
+
         // 结果已排序
         assertEquals(rule2, result.get(0));
         assertEquals(rule1, result.get(1));
@@ -116,7 +115,7 @@ public class RuleUtilsTest {
         TestISqlRule rule = new TestISqlRule(5);
         List<ISqlRule<?>> input = Collections.singletonList(rule);
         List<ISqlRule<?>> result = RuleUtils.sortSqlRulesByPriority(input);
-        
+
         assertEquals(1, result.size());
         assertEquals(rule, result.get(0));
     }
@@ -128,7 +127,7 @@ public class RuleUtilsTest {
         TestISqlRule rule3 = new TestISqlRule(30);
         List<ISqlRule<?>> input = Arrays.asList(rule1, rule2, rule3);
         List<ISqlRule<?>> result = RuleUtils.sortSqlRulesByPriority(input);
-        
+
         assertEquals(3, result.size());
         assertEquals(rule2, result.get(0)); // Priority 10
         assertEquals(rule1, result.get(1)); // Priority 20
@@ -142,7 +141,7 @@ public class RuleUtilsTest {
         TestISqlRule rule3 = new TestISqlRule(15);
         List<ISqlRule<?>> input = Arrays.asList(rule3, rule1, rule2);
         List<ISqlRule<?>> result = RuleUtils.sortSqlRulesByPriority(input);
-        
+
         assertEquals(3, result.size());
         assertEquals(15, result.get(0).getPriority());
         assertEquals(15, result.get(1).getPriority());
@@ -155,15 +154,15 @@ public class RuleUtilsTest {
         TestISqlRule rule2 = new TestISqlRule(10);
         List<ISqlRule<?>> input = new ArrayList<>(Arrays.asList(rule1, rule2));
         List<ISqlRule<?>> original = new ArrayList<>(input);
-        
+
         List<ISqlRule<?>> result = RuleUtils.sortSqlRulesByPriority(input);
-        
+
         // 原列表不变
         assertEquals(original.size(), input.size());
         for (int i = 0; i < original.size(); i++) {
             assertEquals(original.get(i), input.get(i));
         }
-        
+
         // 结果已排序
         assertEquals(rule2, result.get(0));
         assertEquals(rule1, result.get(1));
@@ -174,10 +173,10 @@ public class RuleUtilsTest {
         AddConditionSelectRule rule1 = new AddConditionSelectRule("user", new EqualToConditionExpression("user", "tenant_id", "TENANT_1"), 10);
         AddConditionSelectRule rule2 = new AddConditionSelectRule("user", new EqualToConditionExpression("user", "tenant_id", "TENANT_2"), 5);
         AddConditionSelectRule rule3 = new AddConditionSelectRule("user", new EqualToConditionExpression("user", "tenant_id", "TENANT_3"), 15);
-        
+
         List<IRule> input = Arrays.asList(rule1, rule2, rule3);
         List<IRule> result = RuleUtils.sortByPriority(input);
-        
+
         assertEquals(3, result.size());
         assertEquals(5, result.get(0).getPriority());
         assertEquals(10, result.get(1).getPriority());
@@ -189,10 +188,10 @@ public class RuleUtilsTest {
         AddColumnInsertRule rule1 = new AddColumnInsertRule("user", "tenant_id", "TENANT_1", 20);
         AddColumnInsertRule rule2 = new AddColumnInsertRule("user", "tenant_id", "TENANT_2", 10);
         AddColumnInsertRule rule3 = new AddColumnInsertRule("user", "tenant_id", "TENANT_3", 30);
-        
+
         List<ISqlRule<?>> input = Arrays.asList(rule1, rule2, rule3);
         List<ISqlRule<?>> result = RuleUtils.sortSqlRulesByPriority(input);
-        
+
         assertEquals(3, result.size());
         assertEquals(10, result.get(0).getPriority());
         assertEquals(20, result.get(1).getPriority());
@@ -205,7 +204,7 @@ public class RuleUtilsTest {
         TestIRule rule2 = new TestIRule(RulePriority.HIGH);
         List<IRule> input = Arrays.asList(rule1, rule2);
         List<IRule> result = RuleUtils.sortByPriority(input);
-        
+
         assertEquals(2, result.size());
         assertEquals(rule2, result.get(0)); // HIGH priority first
         assertEquals(rule1, result.get(1)); // DEFAULT priority second
@@ -217,7 +216,7 @@ public class RuleUtilsTest {
         TestISqlRule rule2 = new TestISqlRule(RulePriority.HIGHEST);
         List<ISqlRule<?>> input = Arrays.asList(rule1, rule2);
         List<ISqlRule<?>> result = RuleUtils.sortSqlRulesByPriority(input);
-        
+
         assertEquals(2, result.size());
         assertEquals(rule2, result.get(0)); // HIGHEST priority first
         assertEquals(rule1, result.get(1)); // DEFAULT priority second
@@ -229,7 +228,7 @@ public class RuleUtilsTest {
         TestIRule rule2 = new TestIRule(1);
         List<IRule> input = Arrays.asList(rule1, rule2);
         List<IRule> result = RuleUtils.sortByPriority(input);
-        
+
         assertEquals(2, result.size());
         assertEquals(rule1, result.get(0)); // -1 priority first
         assertEquals(rule2, result.get(1)); // 1 priority second
@@ -241,7 +240,7 @@ public class RuleUtilsTest {
         TestIRule rule2 = new TestIRule(1);
         List<IRule> input = Arrays.asList(rule1, rule2);
         List<IRule> result = RuleUtils.sortByPriority(input);
-        
+
         assertEquals(2, result.size());
         assertEquals(rule1, result.get(0)); // 0 priority first
         assertEquals(rule2, result.get(1)); // 1 priority second
@@ -253,7 +252,7 @@ public class RuleUtilsTest {
         TestIRule rule2 = new TestIRule(Integer.MIN_VALUE);
         List<IRule> input = Arrays.asList(rule1, rule2);
         List<IRule> result = RuleUtils.sortByPriority(input);
-        
+
         assertEquals(2, result.size());
         assertEquals(rule2, result.get(0)); // MIN_VALUE priority first
         assertEquals(rule1, result.get(1)); // MAX_VALUE priority second
