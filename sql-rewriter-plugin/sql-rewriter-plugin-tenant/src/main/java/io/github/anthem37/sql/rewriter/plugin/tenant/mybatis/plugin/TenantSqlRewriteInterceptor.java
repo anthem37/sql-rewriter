@@ -1,4 +1,4 @@
-package io.github.anthem37.sql.rewriter.plugin.tenant.mybatis;
+package io.github.anthem37.sql.rewriter.plugin.tenant.mybatis.plugin;
 
 import cn.hutool.core.util.ObjectUtil;
 import com.google.common.collect.Lists;
