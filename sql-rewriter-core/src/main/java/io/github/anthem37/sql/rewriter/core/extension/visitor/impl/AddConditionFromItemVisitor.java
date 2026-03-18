@@ -56,13 +56,13 @@ public class AddConditionFromItemVisitor extends FromItemVisitorAdapter implemen
     @Override
     public void visit(ParenthesedFromItem aThis) {
         FromItem leftFromItem = aThis.getFromItem();
-        boolean isAcceptable = false;
-        String alias = null;
+        boolean leftMatched = false;
+        String leftAlias = null;
         if (leftFromItem instanceof Table) {
             Table table = ((Table) leftFromItem);
-            isAcceptable = JsqlParserUtils.equalToTableName(tableName, table);
-            if (isAcceptable) {
-                alias = JsqlParserUtils.getAlias(table);
+            leftMatched = JsqlParserUtils.equalToTableName(tableName, table);
+            if (leftMatched) {
+                leftAlias = JsqlParserUtils.getAlias(table);
             }
         }
         leftFromItem.accept(this);
@@ -70,17 +70,24 @@ public class AddConditionFromItemVisitor extends FromItemVisitorAdapter implemen
         if (CollectionUtil.isEmpty(joins)) {
             return;
         }
-        for (Join join : joins) {
+        for (int i = 0; i < joins.size(); i++) {
+            Join join = joins.get(i);
             FromItem rightItem = join.getRightItem();
-            if (!isAcceptable && (rightItem instanceof Table)) {
-                Table table = ((Table) rightItem);
-                isAcceptable = JsqlParserUtils.equalToTableName(tableName, table);
-                if (isAcceptable) {
-                    alias = JsqlParserUtils.getAlias(table);
+            // 只对“当前 join 右表匹配”的 JOIN 注入条件，避免错误扩散到后续不相关 JOIN 上。
+            String joinAlias = null;
+            if (rightItem instanceof Table) {
+                Table table = (Table) rightItem;
+                if (JsqlParserUtils.equalToTableName(tableName, table)) {
+                    joinAlias = JsqlParserUtils.getAlias(table);
                 }
             }
-            if (isAcceptable) {
-                IConditionExpression aliasConditionExpression = conditionExpression.reconstructAliasExpression(alias);
+            if (joinAlias != null) {
+                IConditionExpression aliasConditionExpression = conditionExpression.reconstructAliasExpression(joinAlias);
+                addAndExpression4Join(join, aliasConditionExpression);
+            } else if (i == 0 && leftMatched) {
+                // 仅当目标表命中左侧 FROM 时，给“第一条 JOIN”注入条件；
+                // 比起对后续所有 JOIN 注入更安全，且能覆盖 left-most table 的约束。
+                IConditionExpression aliasConditionExpression = conditionExpression.reconstructAliasExpression(leftAlias);
                 addAndExpression4Join(join, aliasConditionExpression);
             }
             rightItem.accept(this);

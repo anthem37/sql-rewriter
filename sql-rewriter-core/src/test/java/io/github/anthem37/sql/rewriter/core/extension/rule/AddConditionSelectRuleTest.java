@@ -248,6 +248,34 @@ public class AddConditionSelectRuleTest {
         assertTrue(rewrittenSql.contains("orders.tenant_id = 'TENANT_1'"));
     }
 
+    @Test
+    public void testParenthesedFromItemWithMultipleJoinsOnlyAppliesToMatchedRightJoin() throws Exception {
+        // 括号内出现多个 JOIN：tenant -> orders -> products
+        // 目标表为 orders 时，只应增强 orders 对应的 JOIN ON，而不应增强后续 products JOIN ON。
+        Statement statement = CCJSqlParserUtil.parse(
+                "SELECT * FROM (tenant t JOIN orders o ON t.id = o.tenant_id JOIN products p ON o.product_id = p.id) x"
+        );
+        Select select = (Select) statement;
+        createOrdersRule().applyTyped(select);
+
+        PlainSelect outerPlainSelect = (PlainSelect) select.getSelectBody();
+        FromItem fromItem = outerPlainSelect.getFromItem();
+        assertTrue(fromItem instanceof ParenthesedFromItem);
+
+        ParenthesedFromItem parenthesedFromItem = (ParenthesedFromItem) fromItem;
+        List<Join> joins = parenthesedFromItem.getJoins();
+        assertEquals(2, joins.size());
+
+        Join ordersJoin = joins.get(0);
+        Join productsJoin = joins.get(1);
+
+        assertNotNull(ordersJoin.getOnExpression());
+        assertTrue(ordersJoin.getOnExpression().toString().contains("o.tenant_id = 'TENANT_1'"));
+
+        assertNotNull(productsJoin.getOnExpression());
+        assertFalse(productsJoin.getOnExpression().toString().contains("o.tenant_id = 'TENANT_1'"));
+    }
+
     // ========== 聚合查询 ==========
 
     @Test

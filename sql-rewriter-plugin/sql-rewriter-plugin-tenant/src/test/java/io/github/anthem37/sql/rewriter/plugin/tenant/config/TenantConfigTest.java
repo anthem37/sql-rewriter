@@ -183,12 +183,8 @@ public class TenantConfigTest {
                 updateValueSupplier, selectValueSupplier, priority
         );
 
-        try {
-            itemWithExceptionSupplier.getInsertColumnValue();
-            fail("应该抛出异常");
-        } catch (RuntimeException e) {
-            assertEquals("模拟异常", e.getMessage());
-        }
+        // supplier 异常应被捕获，避免影响整个 SQL 重写流程
+        assertNull(itemWithExceptionSupplier.getInsertColumnValue());
     }
 
     @Test
