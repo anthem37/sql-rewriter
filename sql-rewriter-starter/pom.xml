@@ -20,6 +20,7 @@
 
     <modules>
         <module>sql-rewriter-starter-tenant</module>
+        <module>sql-rewriter-starter-tenant-feign</module>
     </modules>
 
 </project>
