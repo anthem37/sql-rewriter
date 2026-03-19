@@ -247,4 +247,40 @@ public class TenantEngineTest {
         String rewrittenSql = engineWithEmptyTables.run(sql);
         assertNotNull(rewrittenSql);
     }
+
+    @Test
+    public void testTenantConfigPriorityAffectsWhereConditionOrder() throws Throwable {
+        // priority 数值越小优先级越高：期望 "A" 条件先于 "B" 条件出现
+        TenantConfig.ConfigItem configB = new TenantConfig.ConfigItem(
+                Collections.singletonList(SQLTypeEnum.SELECT),
+                Collections.singletonList("user"),
+                "tenant_id",
+                null, // insert
+                null, // delete
+                null, // update
+                () -> "B", // select
+                2
+        );
+
+        TenantConfig.ConfigItem configA = new TenantConfig.ConfigItem(
+                Collections.singletonList(SQLTypeEnum.SELECT),
+                Collections.singletonList("user"),
+                "tenant_id",
+                null, // insert
+                null, // delete
+                null, // update
+                () -> "A", // select
+                1
+        );
+
+        // 故意把优先级更低的 configB 放前面，验证 TenantRule 会重新按 priority 排序
+        TenantConfig config = new TenantConfig(Arrays.asList(configB, configA));
+        TenantEngine engine = new TenantEngine(Collections.singletonList(config));
+
+        String result = engine.run("SELECT * FROM user");
+
+        int idxA = result.indexOf("user.tenant_id = 'A'");
+        int idxB = result.indexOf("user.tenant_id = 'B'");
+        assertTrue("期望 priority 更高（数值更小）的 A 条件先出现", idxA >= 0 && idxB >= 0 && idxA < idxB);
+    }
 }

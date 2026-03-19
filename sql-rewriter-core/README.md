@@ -43,9 +43,9 @@
 ### 基础示例
 
 ```java
-import impl.engine.io.github.anthem37.sql.rewriter.core.SQLRewriteEngine;
-import rule.extension.io.github.anthem37.sql.rewriter.core.AddConditionSelectRule;
-import impl.expression.extension.io.github.anthem37.sql.rewriter.core.EqualToConditionExpression;
+import io.github.anthem37.sql.rewriter.core.engine.impl.SQLRewriteEngine;
+import io.github.anthem37.sql.rewriter.core.extension.rule.AddConditionSelectRule;
+import io.github.anthem37.sql.rewriter.core.extension.expression.impl.EqualToConditionExpression;
 
 // 1. 创建重写规则
 AddConditionSelectRule tenantRule = new AddConditionSelectRule(
@@ -54,15 +54,13 @@ AddConditionSelectRule tenantRule = new AddConditionSelectRule(
 );
 
         // 2. 构建重写引擎
-        SQLRewriteEngine engine = new SQLRewriteEngine(List.of(tenantRule));
+        SQLRewriteEngine engine = new SQLRewriteEngine(java.util.Collections.singletonList(tenantRule));
 
         // 3. 执行 SQL 重写
         String originalSql = "SELECT * FROM tenant WHERE status = 'ACTIVE'";
         String rewrittenSql = engine.run(originalSql);
 
-System.out.
-
-        println(rewrittenSql);
+        System.out.println(rewrittenSql);
 // 输出: SELECT * FROM tenant WHERE status = 'ACTIVE' AND tenant.tenant_id = 'TENANT_001'
 ```
 
@@ -869,7 +867,7 @@ public void testTenantIsolation() {
     String originalSql = "SELECT * FROM users WHERE active = 1";
     String expectedSql = "SELECT * FROM users WHERE active = 1 AND users.tenant_id = 'T1'";
 
-    SQLRewriteEngine engine = new SQLRewriteEngine(List.of(rule));
+    SQLRewriteEngine engine = new SQLRewriteEngine(java.util.Collections.singletonList(rule));
     String result = engine.run(originalSql);
 
     assertEquals(expectedSql, result);

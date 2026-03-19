@@ -3,6 +3,7 @@ package io.github.anthem37.sql.rewriter.plugin.tenant.rule;
 import io.github.anthem37.sql.rewriter.core.constant.SQLTypeEnum;
 import io.github.anthem37.sql.rewriter.core.extension.rule.AbstractCombineSqlRule;
 import io.github.anthem37.sql.rewriter.core.rule.ISqlRule;
+import io.github.anthem37.sql.rewriter.core.util.RuleUtils;
 import io.github.anthem37.sql.rewriter.core.util.GsonUtils;
 import io.github.anthem37.sql.rewriter.plugin.tenant.config.TenantConfig;
 import io.github.anthem37.sql.rewriter.plugin.tenant.util.TenantRuleConverter;
@@ -10,6 +11,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.jsqlparser.statement.Statement;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -50,8 +52,15 @@ public class TenantRule extends AbstractCombineSqlRule {
      * @param tenantConfig 租户配置
      */
     public TenantRule(TenantConfig tenantConfig) {
-        this.tenantRuleItems = tenantConfig.getConfigItems().stream().map(TenantRuleItem::new).collect(Collectors.toList());
-        this.rules = tenantRuleItems.stream().flatMap(item -> item.getRules().stream()).collect(Collectors.toList());
+        // 先按 ConfigItem.priority 排序（数值越小优先级越高）
+        this.tenantRuleItems = tenantConfig.getConfigItems().stream()
+                .map(TenantRuleItem::new)
+                .sorted(Comparator.comparingInt(TenantRuleItem::getPriority))
+                .collect(Collectors.toList());
+        // 再展开并按每个 ConfigItem 内部规则的优先级应用
+        this.rules = this.tenantRuleItems.stream()
+                .flatMap(item -> item.getRules().stream())
+                .collect(Collectors.toList());
     }
 
 
@@ -109,7 +118,8 @@ public class TenantRule extends AbstractCombineSqlRule {
             this.updateConditionColumnValueSupplier = configItem.getUpdateConditionColumnValueSupplier();
             this.selectConditionColumnValueSupplier = configItem.getSelectConditionColumnValueSupplier();
             this.priority = configItem.getPriority();
-            this.rules = TenantRuleConverter.convertToSqlRules(configItem);
+            // 内部规则也按优先级排序，避免不同 SQL 类型的条件注入顺序不稳定
+            this.rules = RuleUtils.sortSqlRulesByPriority(TenantRuleConverter.convertToSqlRules(configItem));
             log.debug("创建租户规则项: table={}, column={}, priority={}", GsonUtils.toJson(tableNames), columnName, priority);
         }
 
