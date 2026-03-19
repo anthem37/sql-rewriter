@@ -1,7 +1,6 @@
 package io.github.anthem37.sql.rewriter.starter.tenant.support;
 
 import io.github.anthem37.sql.rewriter.plugin.tenant.mybatis.plugin.TenantSqlRewriteInterceptor;
-import io.github.anthem37.sql.rewriter.starter.tenant.annotation.EnableTenantSqlRewriter;
 import io.github.anthem37.sql.rewriter.starter.tenant.support.interceptor.TenantContextAspect;
 import org.springframework.beans.factory.config.SingletonBeanRegistry;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
@@ -10,7 +9,7 @@ import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.type.AnnotationMetadata;
 
 /**
- * 读取 {@link EnableTenantSqlRewriter} 注解，并在 Spring 容器中注册：
+ * 在启用租户 SQL 重写时，在 Spring 容器中注册：
  * - MyBatis {@link org.apache.ibatis.plugin.Interceptor}（用于执行 SQL 重写）
  * - MyBatis {@link TenantSqlRewriteConfigurationCustomizer}（把拦截器加入 MyBatis 配置）
  * - AOP 切面 {@link TenantContextAspect}（从 {@code @TenantMapping} 解析租户配置）
@@ -26,10 +25,6 @@ public class TenantSqlRewriterTenantRegistrar implements ImportBeanDefinitionReg
 
     @Override
     public void registerBeanDefinitions(AnnotationMetadata importingClassMetadata, BeanDefinitionRegistry registry) {
-        if (!importingClassMetadata.hasAnnotation(EnableTenantSqlRewriter.class.getName())) {
-            return;
-        }
-
         // 1) 注册 MyBatis 拦截器：它会从 TenantContext(ThreadLocal) 取租户配置完成重写
         if (!registry.containsBeanDefinition(TENANT_INTERCEPTOR_BEAN_NAME)) {
             if (registry instanceof SingletonBeanRegistry) {

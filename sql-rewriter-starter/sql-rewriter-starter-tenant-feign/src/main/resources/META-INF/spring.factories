@@ -1,2 +1,0 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=io.github.anthem37.sql.rewriter.starter.tenant.feign.TenantFeignAutoConfiguration
-
