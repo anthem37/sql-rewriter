@@ -18,4 +18,20 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <dependencyManagement>
+        <dependencies>
+            <!--
+              让外部消费者 import `sql-rewriter-bom` 时，直接复用根工程的 dependencyManagement。
+              这样版本管理不会在多个 BOM 之间重复维护，也避免 BOM 之间互相 import 形成环。
+            -->
+            <dependency>
+                <groupId>io.github.anthem37</groupId>
+                <artifactId>sql-rewriter</artifactId>
+                <version>${project.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
 </project>

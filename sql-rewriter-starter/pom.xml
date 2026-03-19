@@ -18,4 +18,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
+    <modules>
+        <module>sql-rewriter-starter-tenant</module>
+    </modules>
+
 </project>
