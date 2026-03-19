@@ -10,6 +10,7 @@ import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.plugin.*;
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.SystemMetaObject;
+import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
 import java.util.Properties;
@@ -22,6 +23,7 @@ import java.util.function.Supplier;
  * @since 2025/11/19 20:09:05
  */
 @Intercepts({@Signature(type = StatementHandler.class, method = "prepare", args = {Connection.class, Integer.class})})
+@Slf4j
 public class TenantSqlRewriteInterceptor implements Interceptor {
 
     /**
@@ -82,7 +84,12 @@ public class TenantSqlRewriteInterceptor implements Interceptor {
 
         // 确保重写后的SQL不为空
         if (ObjectUtil.isNotEmpty(newSql)) {
-            metaObject.setValue("boundSql.sql", newSql);
+            try {
+                metaObject.setValue("boundSql.sql", newSql);
+            } catch (Exception e) {
+                // MyBatis 版本/字段名差异可能导致 setValue 失败；此时保持原SQL继续执行
+                log.warn("TenantSqlRewriteInterceptor: 设置 boundSql.sql 失败，跳过本次 SQL 重写注入。", e);
+            }
         }
 
         return invocation.proceed();

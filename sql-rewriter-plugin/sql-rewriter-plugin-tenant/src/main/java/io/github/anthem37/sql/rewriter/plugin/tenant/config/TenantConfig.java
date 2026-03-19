@@ -4,6 +4,7 @@ import cn.hutool.core.util.ObjectUtil;
 import io.github.anthem37.sql.rewriter.core.constant.SQLTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -18,6 +19,7 @@ import java.util.function.Supplier;
  */
 @Data
 @AllArgsConstructor
+@Slf4j
 public class TenantConfig {
 
     /**
@@ -118,7 +120,7 @@ public class TenantConfig {
                 return insertColumnValueSupplier.get();
             } catch (Exception e) {
                 // 记录异常但不传播，避免影响整个SQL重写流程
-                System.err.println("获取插入时字段值失败: " + e.getMessage());
+                log.error("获取插入时字段值失败: {}", e.getMessage(), e);
                 return null;
             }
         }
@@ -139,7 +141,7 @@ public class TenantConfig {
                 return deleteConditionColumnValueSupplier.get();
             } catch (Exception e) {
                 // 记录异常但不传播，避免影响整个SQL重写流程
-                System.err.println("获取删除时WHERE条件字段值失败: " + e.getMessage());
+                log.error("获取删除时WHERE条件字段值失败: {}", e.getMessage(), e);
                 return null;
             }
         }
@@ -160,7 +162,7 @@ public class TenantConfig {
                 return updateConditionColumnValueSupplier.get();
             } catch (Exception e) {
                 // 记录异常但不传播，避免影响整个SQL重写流程
-                System.err.println("获取更新时WHERE条件字段值失败: " + e.getMessage());
+                log.error("获取更新时WHERE条件字段值失败: {}", e.getMessage(), e);
                 return null;
             }
         }
@@ -181,7 +183,7 @@ public class TenantConfig {
                 return selectConditionColumnValueSupplier.get();
             } catch (Exception e) {
                 // 记录异常但不传播，避免影响整个SQL重写流程
-                System.err.println("获取查询时WHERE条件字段值失败: " + e.getMessage());
+                log.error("获取查询时WHERE条件字段值失败: {}", e.getMessage(), e);
                 return null;
             }
         }

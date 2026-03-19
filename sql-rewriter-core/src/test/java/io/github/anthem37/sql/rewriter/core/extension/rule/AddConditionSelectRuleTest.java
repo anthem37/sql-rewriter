@@ -138,6 +138,25 @@ public class AddConditionSelectRuleTest {
         assertTrue(joins.get(0).isLeft());
         AndExpression onExpression = (AndExpression) joins.get(0).getOnExpression();
         assertEquals("o.tenant_id = 'TENANT_1'", onExpression.getRightExpression().toString());
+        // 目标表在 JOIN 右侧时，只应注入到 ON，不应影响 WHERE（避免语义被错误过滤）
+        assertNull(plainSelect.getWhere());
+    }
+
+    @Test
+    public void testLeftJoinTargetIsLeftTableAddsWhereNotOn() throws Exception {
+        Statement statement = CCJSqlParserUtil.parse("SELECT * FROM tenant t LEFT JOIN orders o ON t.id = o.tenant_id");
+        Select select = (Select) statement;
+        createTenantRule().applyTyped(select);
+
+        PlainSelect plainSelect = (PlainSelect) select.getSelectBody();
+        assertNotNull(plainSelect.getWhere());
+        assertEquals("t.tenant_id = 'TENANT_1'", plainSelect.getWhere().toString());
+
+        List<Join> joins = plainSelect.getJoins();
+        assertEquals(1, joins.size());
+        String joinOn = joins.get(0).getOnExpression().toString();
+        assertTrue(joinOn.contains("t.id = o.tenant_id"));
+        assertFalse("左表条件应写到 WHERE，而不是写入 JOIN ON（避免语义歧义）", joinOn.contains("t.tenant_id"));
     }
 
     @Test
