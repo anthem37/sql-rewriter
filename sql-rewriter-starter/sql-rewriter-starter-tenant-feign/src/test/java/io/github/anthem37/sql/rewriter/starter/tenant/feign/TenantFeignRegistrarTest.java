@@ -25,6 +25,11 @@ public class TenantFeignRegistrarTest {
         Assert.assertFalse(context.getBeansOfType(HeaderTenantIdProvider.class).isEmpty());
         Assert.assertFalse(context.getBeansOfType(RequestInterceptor.class).isEmpty());
 
+        // 基础租户 SQL 重写组件：等效于 @EnableTenantSqlRewriter
+        Assert.assertNotNull(context.getBean("sqlRewriterTenantSqlInterceptor"));
+        Assert.assertNotNull(context.getBean("sqlRewriterTenantConfigurationCustomizer"));
+        Assert.assertNotNull(context.getBean("sqlRewriterTenantContextAspect"));
+
         context.close();
     }
 
