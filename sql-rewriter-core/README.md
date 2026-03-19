@@ -60,7 +60,9 @@ AddConditionSelectRule tenantRule = new AddConditionSelectRule(
         String originalSql = "SELECT * FROM tenant WHERE status = 'ACTIVE'";
         String rewrittenSql = engine.run(originalSql);
 
-        System.out.println(rewrittenSql);
+        System.out.
+
+        println(rewrittenSql);
 // 输出: SELECT * FROM tenant WHERE status = 'ACTIVE' AND tenant.tenant_id = 'TENANT_001'
 ```
 

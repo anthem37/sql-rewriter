@@ -5,12 +5,12 @@ import com.google.common.collect.Lists;
 import io.github.anthem37.sql.rewriter.plugin.tenant.config.TenantConfig;
 import io.github.anthem37.sql.rewriter.plugin.tenant.engine.TenantEngine;
 import io.github.anthem37.sql.rewriter.plugin.tenant.util.TenantContext;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.executor.statement.StatementHandler;
 import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.plugin.*;
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.reflection.SystemMetaObject;
-import lombok.extern.slf4j.Slf4j;
 
 import java.sql.Connection;
 import java.util.Properties;
