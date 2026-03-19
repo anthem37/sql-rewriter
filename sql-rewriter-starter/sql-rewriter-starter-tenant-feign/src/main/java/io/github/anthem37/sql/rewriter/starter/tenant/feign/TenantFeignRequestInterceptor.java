@@ -2,6 +2,7 @@ package io.github.anthem37.sql.rewriter.starter.tenant.feign;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
+import io.github.anthem37.sql.rewriter.core.constant.SQLTypeEnum;
 import io.github.anthem37.sql.rewriter.plugin.tenant.config.TenantConfig;
 import io.github.anthem37.sql.rewriter.plugin.tenant.util.TenantContext;
 import lombok.extern.slf4j.Slf4j;
@@ -28,14 +29,28 @@ public class TenantFeignRequestInterceptor implements RequestInterceptor {
             return;
         }
 
+        // 优先取 SELECT 语义下的租户值；如果取不到，则回退到任意配置项的非空值。
         Object tenantId = null;
         for (TenantConfig.ConfigItem item : config.getConfigItems()) {
-            if (item == null) {
+            if (item == null || item.getRewritableSqlTypes() == null) {
                 continue;
             }
-            tenantId = item.getSelectConditionColumnValue();
-            if (tenantId != null) {
-                break;
+            if (item.getRewritableSqlTypes().contains(SQLTypeEnum.SELECT)) {
+                tenantId = item.getSelectConditionColumnValue();
+                if (tenantId != null) {
+                    break;
+                }
+            }
+        }
+        if (tenantId == null) {
+            for (TenantConfig.ConfigItem item : config.getConfigItems()) {
+                if (item == null) {
+                    continue;
+                }
+                tenantId = item.getSelectConditionColumnValue();
+                if (tenantId != null) {
+                    break;
+                }
             }
         }
         if (tenantId == null) {

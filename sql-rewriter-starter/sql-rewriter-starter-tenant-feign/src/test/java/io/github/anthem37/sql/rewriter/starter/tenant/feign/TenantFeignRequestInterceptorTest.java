@@ -56,5 +56,42 @@ public class TenantFeignRequestInterceptorTest {
 
         Assert.assertFalse(template.headers().containsKey("tenantId"));
     }
+
+    @Test
+    public void apply_shouldPickFirstNonNullSelectTenantId() {
+        TenantFeignRequestInterceptor interceptor = new TenantFeignRequestInterceptor("tenantId");
+
+        TenantConfig tenantConfig = new TenantConfig(Arrays.asList(
+                new TenantConfig.ConfigItem(
+                        Arrays.asList(SQLTypeEnum.SELECT),
+                        Arrays.asList("orders"),
+                        "tenant_id",
+                        () -> "t-insert-1",
+                        () -> "t-delete-1",
+                        () -> "t-update-1",
+                        () -> null,
+                        1
+                ),
+                new TenantConfig.ConfigItem(
+                        Arrays.asList(SQLTypeEnum.SELECT),
+                        Arrays.asList("orders"),
+                        "tenant_id",
+                        () -> "t-insert-2",
+                        () -> "t-delete-2",
+                        () -> "t-update-2",
+                        () -> "t-select-2",
+                        1
+                )
+        ));
+
+        TenantContext.remove();
+        try (TenantContextHolder.AutoCloseableHolder ignored = TenantContextHolder.setConfig(tenantConfig)) {
+            RequestTemplate template = new RequestTemplate();
+            interceptor.apply(template);
+
+            Assert.assertTrue(template.headers().containsKey("tenantId"));
+            Assert.assertEquals("t-select-2", template.headers().get("tenantId").iterator().next());
+        }
+    }
 }
 
