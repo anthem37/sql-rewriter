@@ -8,16 +8,17 @@
 在你的工程 `pom.xml` 的 `dependencyManagement` 里引入：
 
 ```xml
+
 <dependencyManagement>
-  <dependencies>
-    <dependency>
-      <groupId>io.github.anthem37</groupId>
-      <artifactId>sql-rewriter-bom</artifactId>
-      <version>${project.version}</version>
-      <type>pom</type>
-      <scope>import</scope>
-    </dependency>
-  </dependencies>
+    <dependencies>
+        <dependency>
+            <groupId>io.github.anthem37</groupId>
+            <artifactId>sql-rewriter-bom</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+            <scope>import</scope>
+        </dependency>
+    </dependencies>
 </dependencyManagement>
 ```
 

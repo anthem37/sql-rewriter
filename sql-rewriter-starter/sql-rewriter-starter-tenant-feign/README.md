@@ -10,6 +10,7 @@
 1. 在配置类上启用 Feign 透传：
 
 ```java
+
 @Configuration
 @EnableTenantSqlRewriterFeign
 public class TenantFeignAutoConfig {
