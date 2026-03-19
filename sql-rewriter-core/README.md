@@ -1053,6 +1053,30 @@ public class CustomSelectVisitor implements SelectVisitor {
 | `IsNullConditionExpression`    | NULL 条件 | `column IS NULL`      |
 | `IsBooleanConditionExpression` | 布尔条件    | `column IS TRUE`      |
 
+## 租户集成（与 Starter / Plugin 的衔接）
+
+如果你要落地多租户，典型链路是：`Starter` 在 AOP 切面里把租户配置写入 `TenantContext`，
+`MyBatis TenantSqlRewriteInterceptor` 读取 `TenantContext`，再调用 core 的 SQL 重写引擎把 AST 改写后执行。
+
+```mermaid
+flowchart TD
+  A[Starter: @EnableTenantSqlRewriter] --> B[注册 MyBatis 拦截器 + TenantContextAspect]
+  C[@TenantMapping 标注] --> D[TenantContextAspect]
+  D --> E[TenantContext(ThreadLocal) 写入 TenantConfig]
+  E --> F[TenantSqlRewriteInterceptor]
+  F --> G[TenantEngine -> core SQLRewriteEngine]
+  G --> H[重写后的 SQL 执行]
+```
+
+相关模块建议阅读：
+
+- `sql-rewriter-plugin-tenant`（MyBatis 插件 / ThreadLocal）：[
+  `sql-rewriter-plugin/sql-rewriter-plugin-tenant/README.md`](../sql-rewriter-plugin/sql-rewriter-plugin-tenant/README.md)
+- `sql-rewriter-starter-tenant`（注解接入）：[
+  `sql-rewriter-starter/sql-rewriter-starter-tenant/README.md`](../sql-rewriter-starter/sql-rewriter-starter-tenant/README.md)
+- `sql-rewriter-starter-tenant-feign`（Feign 透传）：[
+  `sql-rewriter-starter/sql-rewriter-starter-tenant-feign/README.md`](../sql-rewriter-starter/sql-rewriter-starter-tenant-feign/README.md)
+
 ## 🤝 贡献指南
 
 我们欢迎社区贡献！请遵循以下步骤：
