@@ -6,11 +6,15 @@
     <parent>
         <groupId>io.github.anthem37</groupId>
         <artifactId>sql-rewriter</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0.3</version>
     </parent>
 
     <artifactId>sql-rewriter-bom</artifactId>
     <packaging>pom</packaging>
+
+    <name>SQL Rewriter BOM</name>
+    <description>Maven BOM，统一管理 sql-rewriter 所有子模块的依赖版本</description>
+    <url>https://github.com/anthem37/sql-rewriter</url>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>

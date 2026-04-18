@@ -6,7 +6,7 @@
     <parent>
         <groupId>io.github.anthem37</groupId>
         <artifactId>sql-rewriter</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0.3</version>
     </parent>
 
     <artifactId>sql-rewriter-plugin</artifactId>
@@ -20,5 +20,25 @@
         <maven.compiler.target>8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
+
+    <name>SQL Rewriter Plugin</name>
+    <description>SQL Rewriter Plugin 父模块</description>
+    <url>https://github.com/anthem37/sql-rewriter</url>
+
+    <!-- 跳过 deploy，仅聚合子模块 -->
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>3.1.2</version>
+                    <configuration>
+                        <skip>true</skip>
+                    </configuration>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
 
 </project>

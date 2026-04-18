@@ -6,10 +6,14 @@
     <parent>
         <groupId>io.github.anthem37</groupId>
         <artifactId>sql-rewriter-plugin</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0.3</version>
     </parent>
 
     <artifactId>sql-rewriter-plugin-tenant</artifactId>
+
+    <name>SQL Rewriter Plugin Tenant</name>
+    <description>MyBatis 租户 SQL 重写插件，通过拦截器在 SQL 执行前自动注入租户过滤条件</description>
+    <url>https://github.com/anthem37/sql-rewriter</url>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>

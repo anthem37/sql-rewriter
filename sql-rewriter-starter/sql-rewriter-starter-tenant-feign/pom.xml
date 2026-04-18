@@ -7,11 +7,15 @@
     <parent>
         <groupId>io.github.anthem37</groupId>
         <artifactId>sql-rewriter-starter</artifactId>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0.3</version>
     </parent>
 
     <artifactId>sql-rewriter-starter-tenant-feign</artifactId>
     <packaging>jar</packaging>
+
+    <name>SQL Rewriter Starter Tenant Feign</name>
+    <description>Spring Boot Starter 扩展，支持 OpenFeign 请求时自动透传 tenantId 到下游服务</description>
+    <url>https://github.com/anthem37/sql-rewriter</url>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
