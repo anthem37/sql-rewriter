@@ -1060,9 +1060,9 @@ public class CustomSelectVisitor implements SelectVisitor {
 
 ```mermaid
 flowchart TD
-  A[Starter: @EnableTenantSqlRewriter] --> B[注册 MyBatis 拦截器 + TenantContextAspect]
+  A["Starter: @EnableTenantSqlRewriter"] --> B[注册 MyBatis 拦截器 + TenantContextAspect]
   C["@TenantMapping 标注"] --> D[TenantContextAspect]
-  D --> E[TenantContext(ThreadLocal) 写入 TenantConfig]
+  D --> E["TenantContext(ThreadLocal) 写入 TenantConfig"]
   E --> F[TenantSqlRewriteInterceptor]
   F --> G[TenantEngine -> core SQLRewriteEngine]
   G --> H[重写后的 SQL 执行]
